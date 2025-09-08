@@ -1,20 +1,28 @@
 "use client";
 import InputWithIcon from "@/components/CustomInput/InputWithIcon";
 import CustomTable from "@/components/CustomTable";
+import DialogBrand from "@/components/Dialog/DialogBrand";
 import { Button } from "@/components/ui/button";
+import { ACTION } from "@/constants/action";
 import useLoadingStore from "@/hooks/useLoading";
 import { IBrandResponse } from "@/interface/brands.interface";
 import { IApiParams } from "@/interface/shared/api";
 import { getAllBrands } from "@/services/brand";
 import { debounce } from "lodash";
 import { Plus, Search } from "lucide-react";
+import { useRouter } from "next/navigation";
 import React from "react";
 
 export default function page() {
+  const [open, setOpen] = React.useState<boolean>(false);
+  const [type, setType] = React.useState<string>(ACTION.ADD);
+  const [carID, setCarID] = React.useState<string>("");
+
   const [brands, setBrands] = React.useState<IBrandResponse>();
   const [search, setSearch] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
   const { stopLoading, loading, startLoading } = useLoadingStore();
+  const router = useRouter();
 
   const columns: any[] = React.useMemo(
     () => [
@@ -114,7 +122,12 @@ export default function page() {
               setSearch(e.target.value);
             }, 1000)}
           />
-          <Button>
+          <Button
+            onClick={() => {
+              setOpen(true);
+              setType(ACTION.ADD);
+            }}
+          >
             <Plus color="#fff" /> Thêm mới
           </Button>
         </div>
@@ -132,6 +145,17 @@ export default function page() {
           onChangePageSize={(pageSize) => setPageSize(pageSize)}
         />
       </div>
+
+      {open && type && (
+        <DialogBrand
+          open={open}
+          setOpen={setOpen}
+          type={type}
+          id={carID}
+          reload={getBrand}
+          setType={setType}
+        />
+      )}
     </div>
   );
 }

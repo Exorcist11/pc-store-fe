@@ -65,7 +65,7 @@ export default {
         darkBurgundyHover: "#D6223C",
         lightOrange: "#FF6B4A", // Màu phụ 1: Cam đỏ nhạt (nổi bật)
         highlight: "#FFD166", // Màu phụ 2: Vàng mật ong (điểm nhấn)
-        background: "#FFF8F0", // Màu nền: Trắng kem (dễ đọc)
+        background: "#FFF", // Màu nền: Trắng kem (dễ đọc)
         text: "#333333", // Màu chữ: Xám đen (nội dung)
         textInverse: "#FFFFFF", // Màu chữ nhấn: Trắng (trên nền đỏ)
         footer: "#1A1A1A", // Màu footer: Đen than (sang trọng
