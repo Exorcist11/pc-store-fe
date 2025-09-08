@@ -145,7 +145,7 @@ const CustomTable = <TData, TValue>(props: CustomTableProps<TData, TValue>) => {
 
   return (
     <div className="flex gap-3 flex-col">
-      <div className="w-full overflow-x-auto">
+      <div className="w-full overflow-x-auto hide-scrollbar">
         <Table
           wrapperClassName={cn(
             "border rounded-lg max-h-[70vh]",

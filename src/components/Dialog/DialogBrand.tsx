@@ -20,8 +20,10 @@ import toastifyUtils from "@/utils/toastify";
 import { errorFunc } from "@/lib/errorFunc";
 import { InputWithLabel } from "../CustomInput/InputWithLable";
 import { Switch } from "../ui/switch";
-import { Textarea } from "../ui/textarea";
-import ImageUpload from "../ImageUpload/ImageUpload";
+import { ImageUpload } from "../ImageUpload/ImageUpload";
+import { uploadFile } from "@/services/file/file";
+import { createNewBrand } from "@/services/brand";
+import { IBrand } from "@/interface/brands.interface";
 
 export default function DialogBrand(props: IDialogProps) {
   const { open, setOpen, type, id, reload, setType } = props;
@@ -32,11 +34,25 @@ export default function DialogBrand(props: IDialogProps) {
     defaultValues: {
       name: "",
       slug: "",
-      logo: "",
+      logo: undefined,
       description: "",
       isActive: true,
     },
   });
+
+  const handleUploadImage = async (file: File): Promise<string> => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const imgUrl = await uploadFile(formData);
+
+      return imgUrl;
+    } catch (error) {
+      toastifyUtils("error", "Tải lên hình ảnh thất bại!");
+      throw error;
+    }
+  };
 
   const onDelete = async () => {
     try {
@@ -54,8 +70,24 @@ export default function DialogBrand(props: IDialogProps) {
   const onSubmit = async (data: z.infer<typeof brandSchema>) => {
     try {
       setIsLoading(true);
+
+      if (data.logo instanceof File) {
+        const logoUrl = await handleUploadImage(data.logo);
+        form.setValue("logo", logoUrl);
+      }
+
+      const payload = form.getValues();
+      const dataSend: IBrand = {
+        name: payload.name,
+        logo: String(payload?.logo),
+        slug: payload.slug,
+        description: String(payload.description),
+        isActive: payload.isActive,
+      };
+      console.log(payload);
       if (type === ACTION.ADD) {
-        toastifyUtils("success", "Thêm mới xe thành công!");
+        createNewBrand(dataSend);
+        toastifyUtils("success", "Thêm mới thương hiệu thành công!");
       }
 
       if (type === ACTION.EDIT) {
@@ -71,7 +103,7 @@ export default function DialogBrand(props: IDialogProps) {
   };
   return (
     <Dialog open={open} onOpenChange={() => setOpen && setOpen(!open)}>
-      <DialogContent className="sm:max-w-[800px]">
+      <DialogContent className="sm:max-w-[800px] max-h-[700px] overflow-auto hide-scrollbar">
         <Form {...form}>
           <DialogHeader>
             <DialogTitle>{dialogTitle(type, PAGE.BRAND)}</DialogTitle>
@@ -123,18 +155,16 @@ export default function DialogBrand(props: IDialogProps) {
                     control={form.control}
                     name="logo"
                     render={({ field }) => {
-                      const files: File[] = Array.isArray(field.value)
-                        ? field.value
-                        : [];
+                      const file =
+                        field.value instanceof File ? field.value : undefined;
                       return (
                         <FormItem>
                           <FormLabel>Logo</FormLabel>
                           <FormControl>
                             <ImageUpload
-                              value={files}
-                              onChange={field.onChange}
-                              multiple
-                              maxFiles={5}
+                              value={file ? [file] : []}
+                              onChange={(files) => field.onChange(files[0])}
+                              multiple={false}
                             />
                           </FormControl>
                         </FormItem>

@@ -1,13 +1,13 @@
 export interface IBrand {
-  _id: string;
+  _id?: string;
   name: string;
   slug: string;
   logo: string;
   description: string;
   isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-  __v: number;
+  createdAt?: string;
+  updatedAt?: string;
+  __v?: number;
 }
 
 export interface IBrandResponse {
