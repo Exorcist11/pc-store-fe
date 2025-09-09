@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Upload, X, FileImage, Plus, Trash2 } from "lucide-react";
 
 interface ImageUploadProps {
-  value?: File[];
-  onChange?: (files: File[]) => void;
+  value?: (File | string)[];
+  onChange?: (files: (File | string)[]) => void;
   multiple?: boolean;
   maxFiles?: number;
 }
@@ -19,9 +19,24 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
 
   useEffect(() => {
     if (value.length > 0) {
-      const urls = value.map((file) => URL.createObjectURL(file));
+      const urls = value.map((item) => {
+        if (typeof item === "string") {
+          return item; // Đã là URL
+        } else {
+          return URL.createObjectURL(item); // File object
+        }
+      });
+
       setPreviews(urls);
-      return () => urls.forEach((url) => URL.revokeObjectURL(url));
+
+      // Chỉ revoke URL cho các File objects
+      return () => {
+        urls.forEach((url, index) => {
+          if (typeof value[index] !== "string") {
+            URL.revokeObjectURL(url);
+          }
+        });
+      };
     } else {
       setPreviews([]);
     }
@@ -66,6 +81,21 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
     onChange?.([]);
   };
 
+  const getFileName = (item: File | string, index: number): string => {
+    if (typeof item === "string") {
+      // Trích xuất tên file từ URL
+      return item.split("/").pop() || `image-${index + 1}`;
+    }
+    return item.name;
+  };
+
+  const getFileSize = (item: File | string): string => {
+    if (typeof item === "string") {
+      return "N/A";
+    }
+    return `${Math.round(item.size / 1024)} KB`;
+  };
+
   // Render cho upload đơn với preview trong khung
   if (!multiple) {
     const hasImage = previews.length > 0;
@@ -99,7 +129,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
                 <img
                   src={previews[0]}
                   alt="preview"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain object-center"
                 />
               </div>
 
@@ -130,10 +160,10 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
 
               {/* Image Info */}
               <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                <p className="text-sm text-white truncate">{value[0]?.name}</p>
-                <p className="text-xs text-gray-300">
-                  {Math.round((value[0]?.size || 0) / 1024)} KB
+                <p className="text-sm text-white truncate">
+                  {getFileName(value[0], 0)}
                 </p>
+                <p className="text-xs text-gray-300">{getFileSize(value[0])}</p>
               </div>
             </div>
           ) : (
@@ -173,7 +203,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
     );
   }
 
-  // Render cho upload nhiều ảnh (giữ nguyên logic cũ)
+  // Render cho upload nhiều ảnh
   return (
     <div className="w-full">
       {/* Upload Area */}
@@ -275,7 +305,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
                 {/* Image Info */}
                 <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                   <p className="text-xs text-white truncate">
-                    {value[index]?.name}
+                    {getFileName(value[index], index)}
                   </p>
                 </div>
               </div>

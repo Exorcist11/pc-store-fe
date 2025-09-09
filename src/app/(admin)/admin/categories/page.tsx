@@ -1,13 +1,13 @@
 "use client";
 import InputWithIcon from "@/components/CustomInput/InputWithIcon";
 import CustomTable from "@/components/CustomTable";
-import DialogBrand from "@/components/Dialog/DialogBrand";
+import DialogCategory from "@/components/Dialog/DialogCategory";
 import { Button } from "@/components/ui/button";
 import { ACTION } from "@/constants/action";
 import useLoadingStore from "@/hooks/useLoading";
 import { IBrandResponse } from "@/interface/brands.interface";
 import { IApiParams } from "@/interface/shared/api";
-import { getAllBrands } from "@/services/brand";
+import { getAllCategories } from "@/services/categories";
 import { debounce } from "lodash";
 import { Plus, Search, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -16,7 +16,7 @@ import React from "react";
 export default function page() {
   const [open, setOpen] = React.useState<boolean>(false);
   const [type, setType] = React.useState<string>(ACTION.ADD);
-  const [brandId, setBrandId] = React.useState<string>("");
+  const [categoryId, setCategoryId] = React.useState<string>("");
 
   const [brands, setBrands] = React.useState<IBrandResponse>();
   const [search, setSearch] = React.useState<string>("");
@@ -39,7 +39,7 @@ export default function page() {
         },
       },
       {
-        header: "Tên thương hiệu",
+        header: "Tên danh mục",
         id: "name",
         accessorKey: "name",
         cell: ({ row }: any) => {
@@ -57,7 +57,15 @@ export default function page() {
           return row?.original?.slug;
         },
         meta: {
-          cellClassName: "py-5 w-[37.5%] ",
+          cellClassName: "py-5 w-[30.5%] ",
+        },
+      },
+      {
+        header: "Cấp độ",
+        id: "level",
+        accessorKey: "level",
+        meta: {
+          cellClassName: "py-5 w-[15%] text-center",
         },
       },
       {
@@ -96,7 +104,7 @@ export default function page() {
     [JSON.stringify(brands)]
   );
 
-  const getBrand = async (pageIndex: number) => {
+  const getCategories = async (pageIndex: number) => {
     startLoading();
     const params: IApiParams = {
       limit: pageSize,
@@ -106,7 +114,7 @@ export default function page() {
       keyword: search,
     };
     try {
-      const response = await getAllBrands(params);
+      const response = await getAllCategories(params);
       setBrands(response?.data);
     } catch (error) {
       console.error("Error fetching brands: ", error);
@@ -117,17 +125,17 @@ export default function page() {
 
   const handleRowClick = (row: any) => {
     setOpen(true);
-    setBrandId(row._id);
+    setCategoryId(row._id);
   };
 
   React.useEffect(() => {
-    getBrand(1);
+    getCategories(1);
   }, [pageSize, search]);
 
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between gap-5">
-        <h3 className="font-bold text-xl uppercase">Danh sách thương hiệu</h3>
+        <h3 className="font-bold text-xl uppercase">Danh mục sản phẩm</h3>
 
         <div className="flex items-center justify-end gap-5">
           <InputWithIcon
@@ -141,7 +149,7 @@ export default function page() {
           <Button
             onClick={() => {
               setOpen(true);
-              setBrandId("");
+              setCategoryId("");
             }}
           >
             <Plus color="#fff" /> Thêm mới
@@ -157,19 +165,19 @@ export default function page() {
           pageIndex={brands?.index || 1}
           pageSize={brands?.limit || pageSize}
           totalCount={brands?.total || 0}
-          onChangePage={(pageIndex) => getBrand(pageIndex)}
+          onChangePage={(pageIndex) => getCategories(pageIndex)}
           onChangePageSize={(pageSize) => setPageSize(pageSize)}
           onRowClick={(row) => handleRowClick(row)}
         />
       </div>
 
       {open && type && (
-        <DialogBrand
+        <DialogCategory
           open={open}
           setOpen={setOpen}
           type={type}
-          id={brandId}
-          reload={getBrand}
+          id={categoryId}
+          reload={getCategories}
           setType={setType}
         />
       )}

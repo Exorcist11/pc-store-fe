@@ -36,8 +36,7 @@ const customStyles: StylesConfig<any, boolean> = {
     fontSize: "14px",
     display: "flex",
     alignItems: "center",
-    paddingLeft: "8px", // Giúp text không bị dính vào icon
-    height: "45px",
+    height: "36px",
   }),
   option: (base, { isFocused }) => ({
     ...base,
@@ -103,6 +102,7 @@ export default function ReactSelect(props: IReactSelectProps) {
         placeholder={placeholder}
         isDisabled={disabled}
         styles={customStyles}
+        isClearable
         {...(icon ? { icon } : {})}
       />
     </div>

@@ -1,13 +1,14 @@
 import { IApiParams } from "@/interface/shared/api";
 import axiosInstance from "../api-services";
 import URL_PATHS from "../url-path";
-import { IBrand } from "@/interface/brands.interface";
+import { ICategory } from "@/interface/category.interface";
 
-export const getAllBrands = async (params?: IApiParams) => {
+
+export const getAllCategories = async (params?: IApiParams) => {
   try {
     const res = await axiosInstance({
       method: "GET",
-      url: `${URL_PATHS.BRANDS}`,
+      url: `${URL_PATHS.CATEGORIES}`,
       params: params,
     });
     return res?.data;
@@ -16,11 +17,11 @@ export const getAllBrands = async (params?: IApiParams) => {
   }
 };
 
-export const getBrandById = async (id: string) => {
+export const getCategoryById = async (id: string) => {
   try {
     const res = await axiosInstance({
       method: "GET",
-      url: `${URL_PATHS.BRANDS}/${id}`,
+      url: `${URL_PATHS.CATEGORIES}/${id}`,
     });
     return res?.data.data;
   } catch (error) {
@@ -28,11 +29,11 @@ export const getBrandById = async (id: string) => {
   }
 };
 
-export const createNewBrand = async (payload: IBrand) => {
+export const createNewCategory = async (payload: ICategory) => {
   try {
     const res = await axiosInstance({
       method: "POST",
-      url: `${URL_PATHS.BRANDS}`,
+      url: `${URL_PATHS.CATEGORIES}`,
       data: payload,
     });
 
@@ -42,11 +43,11 @@ export const createNewBrand = async (payload: IBrand) => {
   }
 };
 
-export const updateBrand = async (id: string, payload: IBrand) => {
+export const updateCategory = async (id: string, payload: ICategory) => {
   try {
     const res = await axiosInstance({
       method: "PATCH",
-      url: `${URL_PATHS.BRANDS}/${id}`,
+      url: `${URL_PATHS.CATEGORIES}/${id}`,
       data: payload,
     });
 
@@ -56,11 +57,11 @@ export const updateBrand = async (id: string, payload: IBrand) => {
   }
 };
 
-export const deleteBrand = async (id: string) => {
+export const deleteCategory = async (id: string) => {
   try {
     const res = await axiosInstance({
       method: "DELETE",
-      url: `${URL_PATHS.BRANDS}/${id}`,
+      url: `${URL_PATHS.CATEGORIES}/${id}`,
     });
 
     return res.data;

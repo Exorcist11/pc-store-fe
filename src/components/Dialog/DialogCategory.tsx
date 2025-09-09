@@ -11,7 +11,7 @@ import {
 } from "../ui/dialog";
 import { IDialogProps } from "@/interface/shared/dialog";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { brandSchema } from "@/lib/schema";
+import { brandSchema, categorySchema } from "@/lib/schema";
 import { dialogTitle } from "@/utils/dialogTitle";
 import { ACTION, PAGE } from "@/constants/action";
 import { Button } from "../ui/button";
@@ -22,21 +22,33 @@ import { InputWithLabel } from "../CustomInput/InputWithLable";
 import { Switch } from "../ui/switch";
 import { ImageUpload } from "../ImageUpload/ImageUpload";
 import { uploadFile } from "@/services/file/file";
-import { createNewBrand, getBrandById, updateBrand } from "@/services/brand";
-import { IBrand } from "@/interface/brands.interface";
+import { ICategory } from "@/interface/category.interface";
+import {
+  createNewCategory,
+  getAllCategories,
+  getCategoryById,
+  updateCategory,
+} from "@/services/categories";
+import ReactSelect from "../CustomSelect/ReactSelect";
+import { IApiParams } from "@/interface/shared/api";
 
-export default function DialogBrand(props: IDialogProps) {
+export default function DialogCategory(props: IDialogProps) {
   const { open, setOpen, type, id, reload, setType } = props;
   const [isLoading, setIsLoading] = React.useState(false);
+  const [CATEGORIES, setCATEGORIES] = React.useState<
+    { value: string; label: string }[]
+  >([]);
 
-  const form = useForm<z.infer<typeof brandSchema>>({
-    resolver: zodResolver(brandSchema),
+  const form = useForm<z.infer<typeof categorySchema>>({
+    resolver: zodResolver(categorySchema),
     defaultValues: {
       name: "",
       slug: "",
-      logo: undefined,
       description: "",
+      parentId: "",
+      level: 0,
       isActive: true,
+      sortOrder: 1,
     },
   });
 
@@ -56,14 +68,16 @@ export default function DialogBrand(props: IDialogProps) {
 
   const handleGetBrandById = async () => {
     try {
-      const response = await getBrandById(id);
+      const response: ICategory = await getCategoryById(id);
       if (response) {
         form.reset({
           name: response.name,
           slug: response.slug,
-          logo: response.logo,
           description: response.description,
+          parentId: response.parentId,
+          level: response.level,
           isActive: response.isActive,
+          sortOrder: response.sortOrder,
         });
       }
     } catch (error) {
@@ -88,26 +102,25 @@ export default function DialogBrand(props: IDialogProps) {
     try {
       setIsLoading(true);
 
-      if (data.logo instanceof File) {
-        const logoUrl = await handleUploadImage(data.logo);
-        form.setValue("logo", logoUrl);
-      }
-
       const payload = form.getValues();
-      const dataSend: IBrand = {
+      const dataSend: ICategory = {
         name: payload.name,
-        logo: String(payload?.logo),
         slug: payload.slug,
         description: String(payload.description),
+        parentId: String(payload.parentId),
+        level: payload.level,
         isActive: payload.isActive,
+        sortOrder: payload.sortOrder ?? 0,
       };
 
+      console.log(dataSend);
+
       if (!id) {
-        createNewBrand(dataSend);
-        toastifyUtils("success", "Thêm mới thương hiệu thành công!");
+        createNewCategory(dataSend);
+        toastifyUtils("success", "Thêm mới danh mục thành công!");
       } else {
-        updateBrand(id, dataSend);
-        toastifyUtils("success", "Cập nhật thương hiệu thành công!");
+        updateCategory(id, dataSend);
+        toastifyUtils("success", "Cập nhật danh mục thành công!");
       }
     } catch (error) {
       throw error;
@@ -118,7 +131,28 @@ export default function DialogBrand(props: IDialogProps) {
     }
   };
 
+  const handleGetListCategory = async () => {
+    const params: IApiParams = {
+      limit: 100,
+      index: 1,
+      order: "createdDate",
+      sort: "asc",
+    };
+    try {
+      const response = await getAllCategories(params);
+      setCATEGORIES(
+        response.data.items.map((item: ICategory) => ({
+          value: item._id,
+          label: item.name,
+        }))
+      );
+    } catch (error) {
+      console.error("Error fetching brands: ", error);
+    }
+  };
+
   React.useEffect(() => {
+    handleGetListCategory();
     if (id) {
       handleGetBrandById();
     }
@@ -128,7 +162,7 @@ export default function DialogBrand(props: IDialogProps) {
       <DialogContent className="sm:max-w-[800px] max-h-[700px] overflow-auto hide-scrollbar">
         <Form {...form}>
           <DialogHeader>
-            <DialogTitle>{dialogTitle(type, PAGE.BRAND)}</DialogTitle>
+            <DialogTitle>{dialogTitle(type, PAGE.CATEGORY)}</DialogTitle>
           </DialogHeader>
           {type === ACTION.DELETE ? (
             <>
@@ -173,29 +207,7 @@ export default function DialogBrand(props: IDialogProps) {
                   onSubmit={form.handleSubmit(onSubmit, errorFunc)}
                   className="flex flex-col gap-5 py-4"
                 >
-                  <div className=" grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="logo"
-                      render={({ field }) => {
-                        const value = field.value;
-                        const valueArray = value ? [value] : [];
-
-                        return (
-                          <FormItem>
-                            <FormLabel className="font-bold">Logo</FormLabel>
-                            <FormControl>
-                              <ImageUpload
-                                value={valueArray}
-                                onChange={(files) => field.onChange(files[0])}
-                                multiple={false}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        );
-                      }}
-                    />
-                  </div>
+                  <div className=" grid grid-cols-2 gap-4"></div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
@@ -206,8 +218,8 @@ export default function DialogBrand(props: IDialogProps) {
                           <FormControl>
                             <InputWithLabel
                               {...field}
-                              placeholder="Tên thương hiệu"
-                              title="Tên thương hiệu"
+                              placeholder="Tên thể loại"
+                              title="Tên thể loại"
                               type="text"
                               disable={type === ACTION.VIEW || isLoading}
                               isRequired
@@ -239,6 +251,53 @@ export default function DialogBrand(props: IDialogProps) {
 
                   <FormField
                     control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormField
+                        control={form.control}
+                        name="parentId"
+                        render={({ field }) => (
+                          <FormItem className="w-full">
+                            <FormControl>
+                              <ReactSelect
+                                options={CATEGORIES}
+                                value={CATEGORIES.find(
+                                  (option) => option.value === field.value
+                                )}
+                                onChange={(selectedOption) => {
+                                  field.onChange(selectedOption?.value);
+                                }}
+                                label="Parent"
+                                placeholder="Parent"
+                                disabled={type === ACTION.VIEW}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="level"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <InputWithLabel
+                            {...field}
+                            placeholder="Level"
+                            title="Level"
+                            type="number"
+                            disable={type === ACTION.VIEW || isLoading}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
                     name="description"
                     render={({ field }) => (
                       <FormItem>
@@ -250,7 +309,6 @@ export default function DialogBrand(props: IDialogProps) {
                             type="text"
                             as="textarea"
                             disable={type === ACTION.VIEW || isLoading}
-                            isRequired
                           />
                         </FormControl>
                       </FormItem>
