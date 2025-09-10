@@ -81,21 +81,24 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
     onChange?.([]);
   };
 
-  const getFileName = (item: File | string, index: number): string => {
+  const getFileName = (
+    item: File | string | undefined,
+    index: number
+  ): string => {
+    if (!item) return `image-${index + 1}`;
     if (typeof item === "string") {
-      // Trích xuất tên file từ URL
       return item.split("/").pop() || `image-${index + 1}`;
     }
     return item.name;
   };
 
-  const getFileSize = (item: File | string): string => {
+  const getFileSize = (item: File | string | undefined): string => {
+    if (!item) return "N/A";
     if (typeof item === "string") {
       return "N/A";
     }
     return `${Math.round(item.size / 1024)} KB`;
   };
-
   // Render cho upload đơn với preview trong khung
   if (!multiple) {
     const hasImage = previews.length > 0;

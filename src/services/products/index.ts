@@ -1,13 +1,13 @@
 import { IApiParams } from "@/interface/shared/api";
 import axiosInstance from "../api-services";
 import URL_PATHS from "../url-path";
-import { ICategory } from "@/interface/category.interface";
+import { ICreateProductPayload } from "@/interface/product.interface";
 
-export const getAllCategories = async (params?: IApiParams) => {
+export const getAllProducts = async (params?: IApiParams) => {
   try {
     const res = await axiosInstance({
       method: "GET",
-      url: `${URL_PATHS.CATEGORIES}`,
+      url: `${URL_PATHS.PRODUCTS}`,
       params: params,
     });
     return res?.data;
@@ -16,11 +16,11 @@ export const getAllCategories = async (params?: IApiParams) => {
   }
 };
 
-export const getCategoryById = async (id: string) => {
+export const getProductById = async (id: string) => {
   try {
     const res = await axiosInstance({
       method: "GET",
-      url: `${URL_PATHS.CATEGORIES}/${id}`,
+      url: `${URL_PATHS.PRODUCTS}/${id}`,
     });
     return res?.data.data;
   } catch (error) {
@@ -28,11 +28,11 @@ export const getCategoryById = async (id: string) => {
   }
 };
 
-export const createNewCategory = async (payload: ICategory) => {
+export const createNewProduct = async (payload: ICreateProductPayload) => {
   try {
     const res = await axiosInstance({
       method: "POST",
-      url: `${URL_PATHS.CATEGORIES}`,
+      url: `${URL_PATHS.PRODUCTS}`,
       data: payload,
     });
 
@@ -42,11 +42,14 @@ export const createNewCategory = async (payload: ICategory) => {
   }
 };
 
-export const updateCategory = async (id: string, payload: ICategory) => {
+export const updateProduct = async (
+  id: string,
+  payload: ICreateProductPayload
+) => {
   try {
     const res = await axiosInstance({
       method: "PATCH",
-      url: `${URL_PATHS.CATEGORIES}/${id}`,
+      url: `${URL_PATHS.PRODUCTS}/${id}`,
       data: payload,
     });
 
@@ -56,11 +59,11 @@ export const updateCategory = async (id: string, payload: ICategory) => {
   }
 };
 
-export const deleteCategory = async (id: string) => {
+export const deleteProduct = async (id: string) => {
   try {
     const res = await axiosInstance({
       method: "DELETE",
-      url: `${URL_PATHS.CATEGORIES}/${id}`,
+      url: `${URL_PATHS.PRODUCTS}/${id}`,
     });
 
     return res.data;

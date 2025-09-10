@@ -4,6 +4,7 @@ const URL_PATHS = {
   GET_CURRENT_USER: "",
   BRANDS: "/brands",
   CATEGORIES: "/categories",
+  PRODUCTS: "/products",
   UPLOAD_IMG: "/cloudinary/image",
 };
 
