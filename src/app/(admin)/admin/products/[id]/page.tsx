@@ -271,9 +271,9 @@ export default function ProductForm() {
   };
 
   const getProductDetail = async () => {
+    setIsLoading(true)
     try {
       const product = await getProductById(String(params.id));
-      console.log(product);
       form.reset({
         name: product.name,
         slug: product.slug,
@@ -296,6 +296,8 @@ export default function ProductForm() {
     } catch (error) {
       toastifyUtils("error", "Có lỗi xảy ra khi lấy chi tiết sản phẩm");
       console.error("Error fetching product detail: ", error);
+    } finally {
+      setIsLoading(false)
     }
   };
 
@@ -321,7 +323,7 @@ export default function ProductForm() {
         isLoading={isLoading}
         overlay
         fullScreen
-        text="Đang lưu dữ liệu"
+        text="Đang tải dữ liệu"
         size="md"
       >
         <Form {...form}>
@@ -806,7 +808,11 @@ export default function ProductForm() {
             {/* Submit Actions */}
             <div className="flex justify-end items-center pt-6 border-t bg-white sticky bottom-0 z-10 pb-4">
               <div className="flex items-center gap-4">
-                <Button type="button" variant="outline">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => router.push("/admin/products")}
+                >
                   Hủy
                 </Button>
                 <Button

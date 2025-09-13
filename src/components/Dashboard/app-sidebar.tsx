@@ -4,6 +4,7 @@ import * as React from "react";
 import {
   AudioWaveform,
   Command,
+  FileText,
   GalleryVerticalEnd,
   LayoutDashboard,
   Map,
@@ -90,9 +91,9 @@ const data = {
       ],
     },
     {
-      title: "Quản lý chuyến đi",
+      title: "Quản lý đơn hàng",
       url: "/trips",
-      icon: Map,
+      icon: FileText,
       items: [
         {
           title: "Tuyến đường",
