@@ -107,6 +107,7 @@ export default function page() {
     };
     try {
       const response = await getAllBrands(params);
+
       setBrands(response?.data);
     } catch (error) {
       console.error("Error fetching brands: ", error);

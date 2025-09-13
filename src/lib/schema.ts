@@ -20,12 +20,11 @@ export const brandSchema = z.object({
 
 export const categorySchema = z.object({
   name: z.string().min(1, "Name is required"),
-  slug: z.string().min(1, "Slug is required"),
   description: z.string().optional(),
-  parentId: z.string().optional(),
+  slug: z.string().optional(),
+  parent: z.string().optional(),
   level: z.number(),
   isActive: z.boolean(),
-  sortOrder: z.number().optional(),
 });
 
 export const productSchema = z.object({

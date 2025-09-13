@@ -36,24 +36,31 @@ import {
 } from "@/components/ui/accordion";
 import { X } from "lucide-react";
 import { errorFunc } from "@/lib/errorFunc";
-import slugify from "slugify"; // Import thư viện slugify
+import slugify from "slugify";
+import { getAllCategories } from "@/services/categories";
+import { ICategory } from "@/interface/category.interface";
+import { getAllBrands } from "@/services/brand";
+import { ISelectOption } from "@/interface/shared/common";
+import { uploadFile } from "@/services/file/file";
+import toastifyUtils from "@/utils/toastify";
+import { PRODUCT_TYPE } from "@/lib/dropdownConstant";
+import { IProduct } from "@/interface/product.interface";
+import axiosInstance from "@/services/api-services";
+import URL_PATHS from "@/services/url-path";
 
 export default function ProductPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
+  const [CATEGORIES, setCATEGORIES] = useState<ISelectOption[]>();
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const [initialData, setInitialData] = useState<IBrand | undefined>(undefined);
+  const [BRANDS, setBRANDS] = useState<ISelectOption[]>();
+
   const [socketInput, setSocketInput] = useState("");
   const [memoryTypeInput, setMemoryTypeInput] = useState("");
   const [tagInput, setTagInput] = useState("");
 
   const isCreate = params?.id === "new";
-
-  const CATEGORIES = [
-    { value: "64f92e8e8c9e2f0c12345670", label: "Bộ vi xử lý" },
-    { value: "64f92e8e8c9e2f0c12345671", label: "Card đồ họa" },
-    { value: "64f92e8e8c9e2f0c12345672", label: "Bộ nhớ RAM" },
-  ];
 
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
@@ -83,6 +90,26 @@ export default function ProductPage() {
     },
   });
 
+  const handleUploadImages = async (files: File[]): Promise<string[]> => {
+    try {
+      const uploadPromises = files.map(async (file) => {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const res = await uploadFile(formData);
+
+        return res;
+      });
+
+      const uploadedUrls = await Promise.all(uploadPromises);
+
+      return uploadedUrls;
+    } catch (error) {
+      toastifyUtils("error", "Tải lên hình ảnh thất bại!");
+      throw error;
+    }
+  };
+
   // Tự động tạo slug khi tên sản phẩm thay đổi
   const name = form.watch("name");
   useEffect(() => {
@@ -92,12 +119,94 @@ export default function ProductPage() {
     }
   }, [name, form]);
 
+  const getCATEGORIES = async () => {
+    try {
+      const res = await getAllCategories({ limit: 100 });
+
+      setCATEGORIES(
+        res?.data?.items?.map((item: ICategory) => ({
+          value: item._id,
+          label: item.name,
+        }))
+      );
+    } catch (error) {
+      console.error("Error fetching categories: ", error);
+    }
+  };
+
+  const getBRANDS = async () => {
+    try {
+      const res = await getAllBrands({ limit: 100 });
+
+      setBRANDS(
+        res?.data?.items?.map((item: IBrand) => ({
+          value: item._id,
+          label: item.name,
+        }))
+      );
+    } catch (error) {
+      console.error("Error fetching brands: ", error);
+    }
+  };
+
   useEffect(() => {
-    // fetch dữ liệu nếu là chỉnh sửa
+    getCATEGORIES();
+    getBRANDS();
   }, [params?.id, isCreate]);
 
-  const onSubmit = (data: ProductFormData) => {
-    console.log("Form submitted:", data);
+  const onSubmit = async (data: ProductFormData) => {
+    try {
+      setIsLoading(true);
+
+      if (data.images && Array.isArray(data.images)) {
+        // Tách file
+        const files = data.images.filter(
+          (img): img is File => img instanceof File
+        );
+
+        let uploadedUrls: string[] = [];
+        if (files.length > 0) {
+          uploadedUrls = await handleUploadImages(files);
+        }
+
+        // Giữ lại url cũ + gộp với url mới upload
+        const allImages: string[] = [
+          ...data.images.filter(
+            (img): img is string => typeof img === "string"
+          ),
+          ...uploadedUrls,
+        ];
+
+        form.setValue("images", allImages);
+      }
+
+      const finalData = form.getValues();
+      if (isCreate) {
+        onCreateProduct(finalData);
+        toastifyUtils("success", "Thêm mới sản phẩm thành công!");
+      } else {
+        toastifyUtils("success", "Cập nhật sản phẩm thành công!");
+      }
+    } catch (error) {
+      throw error;
+    } finally {
+      setIsLoading(false);
+      // router.back();
+    }
+  };
+
+  const onCreateProduct = async (payload: ProductFormData) => {
+    try {
+      const res = await axiosInstance({
+        method: "POST",
+        url: `${URL_PATHS.PRODUCTS}`,
+        data: payload,
+      });
+
+      return res.data;
+    } catch (error) {
+      throw error;
+    }
   };
 
   const addSocket = () => {
@@ -236,7 +345,7 @@ export default function ProductPage() {
                                 <SelectValue placeholder="Chọn danh mục" />
                               </SelectTrigger>
                               <SelectContent>
-                                {CATEGORIES.map((category) => (
+                                {CATEGORIES?.map((category) => (
                                   <SelectItem
                                     key={category.value}
                                     value={category.value}
@@ -258,7 +367,24 @@ export default function ProductPage() {
                         <FormItem>
                           <FormLabel>Thương hiệu</FormLabel>
                           <FormControl>
-                            <Input placeholder="Nhập thương hiệu" {...field} />
+                            <Select
+                              value={field.value}
+                              onValueChange={field.onChange}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Chọn thương hiệu" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {BRANDS?.map((brand) => (
+                                  <SelectItem
+                                    key={brand.value}
+                                    value={brand.value}
+                                  >
+                                    {brand.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -286,10 +412,24 @@ export default function ProductPage() {
                         <FormItem>
                           <FormLabel>Loại sản phẩm</FormLabel>
                           <FormControl>
-                            <Input
-                              placeholder="Nhập loại sản phẩm"
-                              {...field}
-                            />
+                            <Select
+                              value={field.value}
+                              onValueChange={field.onChange}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Chọn loại sản phẩm" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {PRODUCT_TYPE?.map((brand) => (
+                                  <SelectItem
+                                    key={brand.value}
+                                    value={brand.value}
+                                  >
+                                    {brand.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </FormControl>
                           <FormMessage />
                         </FormItem>

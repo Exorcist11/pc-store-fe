@@ -44,9 +44,7 @@ export default function DialogBrand(props: IDialogProps) {
     try {
       const formData = new FormData();
       formData.append("file", file);
-
       const imgUrl = await uploadFile(formData);
-
       return imgUrl;
     } catch (error) {
       toastifyUtils("error", "Tải lên hình ảnh thất bại!");
@@ -74,6 +72,7 @@ export default function DialogBrand(props: IDialogProps) {
   const onDelete = async () => {
     try {
       if (type === ACTION.DELETE) {
+        // TODO: call delete API
       }
     } catch (error) {
       throw error;
@@ -123,21 +122,26 @@ export default function DialogBrand(props: IDialogProps) {
       handleGetBrandById();
     }
   }, [id]);
+
   return (
     <Dialog open={open} onOpenChange={() => setOpen && setOpen(!open)}>
-      <DialogContent className="sm:max-w-[800px] max-h-[700px] overflow-auto hide-scrollbar">
+      <DialogContent className="sm:max-w-[800px] max-h-[700px] flex flex-col">
         <Form {...form}>
-          <DialogHeader>
+          {/* Header cố định */}
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle>{dialogTitle(type, PAGE.BRAND)}</DialogTitle>
           </DialogHeader>
+
           {type === ACTION.DELETE ? (
             <>
-              <h3>
-                Bạn có xác nhận xóa thương hiệu trên. Dữ liệu xóa không thể khôi
-                phục!
-              </h3>
-
-              <DialogFooter className="w-full flex flex-row sm:justify-between">
+              <div className="flex-1 overflow-auto py-4">
+                <h3>
+                  Bạn có xác nhận xóa thương hiệu trên. Dữ liệu xóa không thể
+                  khôi phục!
+                </h3>
+              </div>
+              {/* Footer cố định */}
+              <DialogFooter className="flex-shrink-0 border-t pt-4">
                 <div className="flex gap-2 items-center justify-end w-full">
                   <Button
                     type="reset"
@@ -161,153 +165,164 @@ export default function DialogBrand(props: IDialogProps) {
             </>
           ) : (
             <>
-              {isLoading ? (
-                <div className="flex flex-col gap-5 py-4">
-                  <Skeleton className="h-10 w-full" />
-                  <Skeleton className="h-10 w-full" />
-                  <Skeleton className="h-10 w-full" />
-                  <Skeleton className="h-10 w-full" />
-                </div>
-              ) : (
-                <form
-                  onSubmit={form.handleSubmit(onSubmit, errorFunc)}
-                  className="flex flex-col gap-5 py-4"
-                >
-                  <div className=" grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="logo"
-                      render={({ field }) => {
-                        const value = field.value;
-                        const valueArray = value ? [value] : [];
+              {/* Nội dung cuộn được */}
+              <div className="flex-1 overflow-auto hide-scrollbar py-4">
+                {isLoading ? (
+                  <div className="flex flex-col gap-5">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                ) : (
+                  <form
+                    onSubmit={form.handleSubmit(onSubmit, errorFunc)}
+                    className="flex flex-col gap-5"
+                  >
+                    {/* Logo */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="logo"
+                        render={({ field }) => {
+                          const value = field.value;
+                          const valueArray = value ? [value] : [];
+                          return (
+                            <FormItem>
+                              <FormLabel className="font-bold">Logo</FormLabel>
+                              <FormControl>
+                                <ImageUpload
+                                  value={valueArray}
+                                  onChange={(files) => field.onChange(files[0])}
+                                  multiple={false}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          );
+                        }}
+                      />
+                    </div>
 
-                        return (
-                          <FormItem>
-                            <FormLabel className="font-bold">Logo</FormLabel>
+                    {/* Name + Slug */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem className={id ? "" : "col-span-2"}>
                             <FormControl>
-                              <ImageUpload
-                                value={valueArray}
-                                onChange={(files) => field.onChange(files[0])}
-                                multiple={false}
+                              <InputWithLabel
+                                {...field}
+                                placeholder="Tên thương hiệu"
+                                title="Tên thương hiệu"
+                                type="text"
+                                disable={type === ACTION.VIEW || isLoading}
+                                isRequired
                               />
                             </FormControl>
                           </FormItem>
-                        );
-                      }}
-                    />
-                  </div>
+                        )}
+                      />
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <InputWithLabel
-                              {...field}
-                              placeholder="Tên thương hiệu"
-                              title="Tên thương hiệu"
-                              type="text"
-                              disable={type === ACTION.VIEW || isLoading}
-                              isRequired
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="slug"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <InputWithLabel
-                              {...field}
-                              placeholder="Slug"
-                              title="Slug"
-                              type="text"
-                              disable={type === ACTION.VIEW || isLoading}
-                              isRequired
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <InputWithLabel
-                            {...field}
-                            placeholder="Mô tả"
-                            title="Mô tả"
-                            type="text"
-                            as="textarea"
-                            disable={type === ACTION.VIEW || isLoading}
-                            isRequired
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="isActive"
-                    render={({ field }) => (
-                      <FormItem className="w-full flex-col flex">
-                        <FormLabel className="font-bold">Trạng thái</FormLabel>
-                        <Switch
-                          disabled={type === ACTION.VIEW}
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          className="data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+                      {(id || type === ACTION.EDIT || type === ACTION.VIEW) && (
+                        <FormField
+                          control={form.control}
+                          name="slug"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <InputWithLabel
+                                  {...field}
+                                  placeholder="Slug"
+                                  title="Slug"
+                                  type="text"
+                                  disable={type === ACTION.VIEW || isLoading}
+                                  isRequired
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
                         />
-                      </FormItem>
-                    )}
-                  />
-
-                  <DialogFooter className="w-full flex flex-row sm:justify-between">
-                    <div className="flex gap-2 items-center justify-end w-full">
-                      <Button
-                        type="reset"
-                        variant={"outline"}
-                        disabled={isLoading}
-                        onClick={() => setOpen(false)}
-                        className="min-w-[120px]"
-                      >
-                        Hủy bỏ
-                      </Button>
-                      {type === ACTION.VIEW && (
-                        <Button
-                          type="button"
-                          disabled={isLoading}
-                          onClick={() => setType(ACTION.EDIT)}
-                          className="min-w-[120px]"
-                        >
-                          Chỉnh sửa
-                        </Button>
-                      )}
-
-                      {type !== ACTION.VIEW && (
-                        <Button
-                          type="submit"
-                          disabled={isLoading}
-                          className="min-w-[120px]"
-                        >
-                          {isLoading ? "Loading..." : "Lưu"}
-                        </Button>
                       )}
                     </div>
-                  </DialogFooter>
-                </form>
-              )}
+
+                    {/* Description */}
+                    <FormField
+                      control={form.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <InputWithLabel
+                              {...field}
+                              placeholder="Mô tả"
+                              title="Mô tả"
+                              type="text"
+                              as="textarea"
+                              disable={type === ACTION.VIEW || isLoading}
+                              isRequired
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Status */}
+                    <FormField
+                      control={form.control}
+                      name="isActive"
+                      render={({ field }) => (
+                        <FormItem className="w-full flex-col flex">
+                          <FormLabel className="font-bold">
+                            Trạng thái
+                          </FormLabel>
+                          <Switch
+                            disabled={type === ACTION.VIEW}
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            className="data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+                          />
+                        </FormItem>
+                      )}
+                    />
+                  </form>
+                )}
+              </div>
+
+              {/* Footer cố định */}
+              <DialogFooter className="flex-shrink-0 border-t pt-4">
+                <div className="flex gap-2 items-center justify-end w-full">
+                  <Button
+                    type="reset"
+                    variant={"outline"}
+                    disabled={isLoading}
+                    onClick={() => setOpen(false)}
+                    className="min-w-[120px]"
+                  >
+                    Hủy bỏ
+                  </Button>
+                  {type === ACTION.VIEW && (
+                    <Button
+                      type="button"
+                      disabled={isLoading}
+                      onClick={() => setType(ACTION.EDIT)}
+                      className="min-w-[120px]"
+                    >
+                      Chỉnh sửa
+                    </Button>
+                  )}
+
+                  {type !== ACTION.VIEW && (
+                    <Button
+                      type="submit"
+                      disabled={isLoading}
+                      className="min-w-[120px]"
+                    >
+                      {isLoading ? "Loading..." : "Lưu"}
+                    </Button>
+                  )}
+                </div>
+              </DialogFooter>
             </>
           )}
         </Form>

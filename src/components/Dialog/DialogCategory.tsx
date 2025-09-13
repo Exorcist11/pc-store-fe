@@ -11,7 +11,7 @@ import {
 } from "../ui/dialog";
 import { IDialogProps } from "@/interface/shared/dialog";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { brandSchema, categorySchema } from "@/lib/schema";
+import { categorySchema } from "@/lib/schema";
 import { dialogTitle } from "@/utils/dialogTitle";
 import { ACTION, PAGE } from "@/constants/action";
 import { Button } from "../ui/button";
@@ -20,8 +20,6 @@ import toastifyUtils from "@/utils/toastify";
 import { errorFunc } from "@/lib/errorFunc";
 import { InputWithLabel } from "../CustomInput/InputWithLable";
 import { Switch } from "../ui/switch";
-import { ImageUpload } from "../ImageUpload/ImageUpload";
-import { uploadFile } from "@/services/file/file";
 import { ICategory } from "@/interface/category.interface";
 import {
   createNewCategory,
@@ -29,8 +27,14 @@ import {
   getCategoryById,
   updateCategory,
 } from "@/services/categories";
-import ReactSelect from "../CustomSelect/ReactSelect";
 import { IApiParams } from "@/interface/shared/api";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
 export default function DialogCategory(props: IDialogProps) {
   const { open, setOpen, type, id, reload, setType } = props;
@@ -43,51 +47,36 @@ export default function DialogCategory(props: IDialogProps) {
     resolver: zodResolver(categorySchema),
     defaultValues: {
       name: "",
-      slug: "",
       description: "",
-      parentId: "",
-      level: 0,
+      parent: "",
+      slug: "",
+      level: 1,
       isActive: true,
-      sortOrder: 1,
     },
   });
 
-  const handleUploadImage = async (file: File): Promise<string> => {
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const imgUrl = await uploadFile(formData);
-
-      return imgUrl;
-    } catch (error) {
-      toastifyUtils("error", "Tải lên hình ảnh thất bại!");
-      throw error;
-    }
-  };
-
-  const handleGetBrandById = async () => {
+  const handleGetCategoryById = async () => {
     try {
       const response: ICategory = await getCategoryById(id);
       if (response) {
         form.reset({
           name: response.name,
-          slug: response.slug,
           description: response.description,
-          parentId: response.parentId,
+          slug: response.slug,
+          parent: response.parent,
           level: response.level,
           isActive: response.isActive,
-          sortOrder: response.sortOrder,
         });
       }
     } catch (error) {
-      console.error("Error fetching brand: ", error);
+      console.error("Error fetching category: ", error);
     }
   };
 
   const onDelete = async () => {
     try {
       if (type === ACTION.DELETE) {
+        // TODO: call delete service
       }
     } catch (error) {
       throw error;
@@ -98,28 +87,27 @@ export default function DialogCategory(props: IDialogProps) {
     }
   };
 
-  const onSubmit = async (data: z.infer<typeof brandSchema>) => {
+  const onSubmit = async (data: z.infer<typeof categorySchema>) => {
     try {
       setIsLoading(true);
 
       const payload = form.getValues();
       const dataSend: ICategory = {
         name: payload.name,
-        slug: payload.slug,
+        slug: String(payload.slug),
         description: String(payload.description),
-        parentId: String(payload.parentId),
+        parent: String(payload.parent),
         level: payload.level,
         isActive: payload.isActive,
-        sortOrder: payload.sortOrder ?? 0,
       };
 
-      console.log(dataSend);
+      console.log(dataSend)
 
       if (!id) {
-        createNewCategory(dataSend);
+        await createNewCategory(dataSend);
         toastifyUtils("success", "Thêm mới danh mục thành công!");
       } else {
-        updateCategory(id, dataSend);
+        await updateCategory(id, dataSend);
         toastifyUtils("success", "Cập nhật danh mục thành công!");
       }
     } catch (error) {
@@ -141,22 +129,23 @@ export default function DialogCategory(props: IDialogProps) {
     try {
       const response = await getAllCategories(params);
       setCATEGORIES(
-        response.data.items.map((item: ICategory) => ({
+        response?.data?.items.map((item: ICategory) => ({
           value: item._id,
           label: item.name,
         }))
       );
     } catch (error) {
-      console.error("Error fetching brands: ", error);
+      console.error("Error fetching categories: ", error);
     }
   };
 
   React.useEffect(() => {
     handleGetListCategory();
     if (id) {
-      handleGetBrandById();
+      handleGetCategoryById();
     }
   }, [id]);
+
   return (
     <Dialog open={open} onOpenChange={() => setOpen && setOpen(!open)}>
       <DialogContent className="sm:max-w-[800px] max-h-[700px] overflow-auto hide-scrollbar">
@@ -167,7 +156,7 @@ export default function DialogCategory(props: IDialogProps) {
           {type === ACTION.DELETE ? (
             <>
               <h3>
-                Bạn có xác nhận xóa thương hiệu trên. Dữ liệu xóa không thể khôi
+                Bạn có xác nhận xóa danh mục trên? Dữ liệu xóa sẽ không thể khôi
                 phục!
               </h3>
 
@@ -207,14 +196,12 @@ export default function DialogCategory(props: IDialogProps) {
                   onSubmit={form.handleSubmit(onSubmit, errorFunc)}
                   className="flex flex-col gap-5 py-4"
                 >
-                  <div className=" grid grid-cols-2 gap-4"></div>
-
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="name"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className={`${!id && "col-span-2"}`}>
                           <FormControl>
                             <InputWithLabel
                               {...field}
@@ -229,72 +216,77 @@ export default function DialogCategory(props: IDialogProps) {
                       )}
                     />
 
-                    <FormField
-                      control={form.control}
-                      name="slug"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <InputWithLabel
-                              {...field}
-                              placeholder="Slug"
-                              title="Slug"
-                              type="text"
-                              disable={type === ACTION.VIEW || isLoading}
-                              isRequired
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
+                    {id && (
                       <FormField
                         control={form.control}
-                        name="parentId"
+                        name="slug"
                         render={({ field }) => (
-                          <FormItem className="w-full">
+                          <FormItem>
                             <FormControl>
-                              <ReactSelect
-                                options={CATEGORIES}
-                                value={CATEGORIES.find(
-                                  (option) => option.value === field.value
-                                )}
-                                onChange={(selectedOption) => {
-                                  field.onChange(selectedOption?.value);
-                                }}
-                                label="Parent"
-                                placeholder="Parent"
-                                disabled={type === ACTION.VIEW}
+                              <InputWithLabel
+                                {...field}
+                                placeholder="Slug"
+                                title="Slug"
+                                type="text"
+                                disable={!id}
+                              
                               />
                             </FormControl>
                           </FormItem>
                         )}
                       />
                     )}
-                  />
+                  </div>
 
                   <FormField
                     control={form.control}
-                    name="level"
+                    name="parent"
                     render={({ field }) => (
                       <FormItem>
-                        <FormControl>
-                          <InputWithLabel
-                            {...field}
-                            placeholder="Level"
-                            title="Level"
-                            type="number"
-                            disable={type === ACTION.VIEW || isLoading}
-                          />
-                        </FormControl>
+                        <FormLabel className="font-bold">
+                          Danh mục cha
+                        </FormLabel>
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          disabled={type === ACTION.VIEW}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Chọn danh mục cha" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {CATEGORIES.map((cat) => (
+                              <SelectItem key={cat.value} value={cat.value}>
+                                {cat.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </FormItem>
                     )}
                   />
+
+                  {id && (
+                    <FormField
+                      control={form.control}
+                      name="level"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <InputWithLabel
+                              {...field}
+                              placeholder="Level"
+                              title="Level"
+                              type="number"
+                              disable={
+                                !!id || type === ACTION.VIEW || isLoading
+                              }
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  )}
 
                   <FormField
                     control={form.control}
