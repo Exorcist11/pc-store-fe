@@ -41,7 +41,11 @@ import { errorFunc } from "@/lib/errorFunc";
 import { uploadFile } from "@/services/file/file";
 import toastifyUtils from "@/utils/toastify";
 import LoadingWrapper from "@/components/Loading/LoadingWrapper";
-import { createNewProduct } from "@/services/products";
+import {
+  createNewProduct,
+  getProductById,
+  updateProduct,
+} from "@/services/products";
 
 export default function ProductForm() {
   const [attributeInput, setAttributeInput] = useState("");
@@ -220,12 +224,12 @@ export default function ProductForm() {
 
       if (isCreateProduct) {
         await createNewProduct(payload);
+        toastifyUtils("success", "Sản phẩm đã được tạo thành công!");
+      } else {
+        await updateProduct(String(params.id), payload);
+        toastifyUtils("success", "Sản phẩm đã được cập nhật thành công!");
       }
 
-      // TODO: gọi API backend tạo product
-      // await createProduct(payload);
-
-      toastifyUtils("success", "Sản phẩm đã được tạo thành công!");
       form.reset();
     } catch (error) {
       console.error("Error creating product:", error);
@@ -266,14 +270,48 @@ export default function ProductForm() {
     }
   };
 
+  const getProductDetail = async () => {
+    try {
+      const product = await getProductById(String(params.id));
+      console.log(product);
+      form.reset({
+        name: product.name,
+        slug: product.slug,
+        description: product.description,
+        brand: product.brand,
+        category: product.category,
+        productType: product.productType,
+        allowedAttributes: product.allowedAttributes,
+        variants: product.variants.map((v: any) => ({
+          sku: v.sku,
+          slug: v.slug,
+          price: v.price,
+          stock: v.stock,
+          attributes: v.attributes,
+          images: v.images,
+        })),
+        images: product.images,
+        discount: product.discount,
+      });
+    } catch (error) {
+      toastifyUtils("error", "Có lỗi xảy ra khi lấy chi tiết sản phẩm");
+      console.error("Error fetching product detail: ", error);
+    }
+  };
+
   useEffect(() => {
     getLookUp();
-  }, []);
+    if (!isCreateProduct) {
+      getProductDetail();
+    }
+  }, [params?.id]);
 
   return (
     <div className="container mx-auto px-4 max-w-7xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Tạo sản phẩm mới</h1>
+        <h1 className="text-3xl font-bold tracking-tight">
+          {isCreateProduct ? "Tạo sản phẩm mới" : "Chi tiết sản phẩm"}
+        </h1>
         <p className="text-muted-foreground mt-2">
           Tạo sản phẩm với nhiều biến thể và thuộc tính tùy chỉnh
         </p>
@@ -327,6 +365,7 @@ export default function ProductForm() {
                                 <Input
                                   placeholder="auto-generated-slug"
                                   {...field}
+                                  disabled
                                 />
                               </FormControl>
                               <FormMessage />
@@ -781,8 +820,10 @@ export default function ProductForm() {
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                       Đang tạo...
                     </div>
-                  ) : (
+                  ) : isCreateProduct ? (
                     "Tạo sản phẩm"
+                  ) : (
+                    "Cập nhật sản phẩm"
                   )}
                 </Button>
               </div>

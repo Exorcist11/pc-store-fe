@@ -116,7 +116,11 @@ export default function VariantItem({
             <FormItem>
               <FormLabel>Slug biến thể</FormLabel>
               <FormControl>
-                <Input placeholder="auto-generated-variant-slug" {...field} />
+                <Input
+                  placeholder="auto-generated-variant-slug"
+                  {...field}
+                  disabled
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

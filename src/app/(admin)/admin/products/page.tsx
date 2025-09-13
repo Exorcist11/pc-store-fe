@@ -1,15 +1,14 @@
 "use client";
 import InputWithIcon from "@/components/CustomInput/InputWithIcon";
 import CustomTable from "@/components/CustomTable";
-import DialogCategory from "@/components/Dialog/DialogCategory";
 import { Button } from "@/components/ui/button";
-import { ACTION } from "@/constants/action";
 import useLoadingStore from "@/hooks/useLoading";
 import { IBrandResponse } from "@/interface/brands.interface";
+import { ICategory } from "@/interface/category.interface";
 import { IApiParams } from "@/interface/shared/api";
 import { getAllProducts } from "@/services/products";
 import { debounce } from "lodash";
-import { Plus, Search, Trash2 } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
 
@@ -99,6 +98,10 @@ export default function page() {
     [JSON.stringify(brands)]
   );
 
+  const handleRowClick = (row: ICategory) => {
+    router.push(`/admin/products/${row._id}`);
+  };
+
   const getCategories = async (pageIndex: number) => {
     startLoading();
     const params: IApiParams = {
@@ -156,6 +159,7 @@ export default function page() {
           totalCount={brands?.total || 0}
           onChangePage={(pageIndex) => getCategories(pageIndex)}
           onChangePageSize={(pageSize) => setPageSize(pageSize)}
+          onRowClick={(row) => handleRowClick(row)}
         />
       </div>
     </div>

@@ -69,11 +69,12 @@ export type ProductType = "laptop" | "desktop" | "accessory";
 export interface ICreateProduct {
   name: string;
   description?: string;
-  brand: string; 
+  brand: string;
   category: string;
   productType: ProductType;
   allowedAttributes?: string[];
   variants: Variant[];
   images?: string[];
   discount?: number;
+  isActive?: boolean;
 }
