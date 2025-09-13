@@ -1,7 +1,7 @@
 import { IApiParams } from "@/interface/shared/api";
 import axiosInstance from "../api-services";
 import URL_PATHS from "../url-path";
-import { ICreateProductPayload } from "@/interface/product.interface";
+import { ICreateProduct } from "@/interface/product.interface";
 
 export const getAllProducts = async (params?: IApiParams) => {
   try {
@@ -28,7 +28,7 @@ export const getProductById = async (id: string) => {
   }
 };
 
-export const createNewProduct = async (payload: ICreateProductPayload) => {
+export const createNewProduct = async (payload: ICreateProduct) => {
   try {
     const res = await axiosInstance({
       method: "POST",
@@ -42,10 +42,7 @@ export const createNewProduct = async (payload: ICreateProductPayload) => {
   }
 };
 
-export const updateProduct = async (
-  id: string,
-  payload: ICreateProductPayload
-) => {
+export const updateProduct = async (id: string, payload: ICreateProduct) => {
   try {
     const res = await axiosInstance({
       method: "PATCH",

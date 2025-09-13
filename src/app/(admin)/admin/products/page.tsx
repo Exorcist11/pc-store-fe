@@ -68,13 +68,9 @@ export default function page() {
         },
       },
       {
-        header: "Giá",
+        header: "Loại sản phẩm",
         id: "price",
-        accessorKey: "price",
-        cell: ({ row }: any) => {
-          const price = row?.original?.price;
-          return price ? `${price.toLocaleString("vi-VN")} VND` : "";
-        },
+        accessorKey: "productType",
         meta: {
           cellClassName: "py-5 w-[25%]",
         },
@@ -87,7 +83,7 @@ export default function page() {
           const isActive = row?.original?.isActive;
           return (
             <span
-              className={`px-3 py-1 rounded-full text-white text-sm font-medium ${
+              className={`px-3 py-1 rounded-full text-white flex justify-start w-fit text-sm font-medium ${
                 isActive ? "bg-green-500" : "bg-red-500"
               }`}
             >

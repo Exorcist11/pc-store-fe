@@ -1,10 +1,3 @@
-export type ProductType =
-  | "accessory"
-  | "component"
-  | "laptop"
-  | "desktop"
-  | "other";
-
 export interface IProduct {
   _id: string;
   name: string;
@@ -63,46 +56,24 @@ export interface IProductResponse {
   items: IProduct[];
 }
 
-export interface ICreateProductPayload {
-  name: string;
-  slug: string;
+export interface Variant {
   sku: string;
-  categoryId: string;
-  brandId: string;
-  productType: ProductType;
-
-  description: string;
-  shortDescription?: string;
-
-  specifications?: Record<string, string | number | boolean | null>;
-
-  images?: string[]; // danh sách URL ảnh
-
   price: number;
-  comparePrice?: number;
-  costPrice?: number;
+  stock: number;
+  attributes: Record<string, string>;
+  images: string[];
+}
 
-  stock?: number;
-  minStock?: number;
+export type ProductType = "laptop" | "desktop" | "accessory";
 
-  weight?: number;
-
-  dimensions?: {
-    length?: number;
-    width?: number;
-    height?: number;
-  };
-
-  compatibility?: {
-    sockets?: string[];
-    memoryTypes?: string[];
-    maxMemory?: number;
-  };
-
-  isActive?: boolean;
-  isFeatured?: boolean;
-  tags?: string[];
-
-  seoTitle?: string;
-  seoDescription?: string;
+export interface ICreateProduct {
+  name: string;
+  description?: string;
+  brand: string; 
+  category: string;
+  productType: ProductType;
+  allowedAttributes?: string[];
+  variants: Variant[];
+  images?: string[];
+  discount?: number;
 }

@@ -127,7 +127,6 @@ export default function DialogBrand(props: IDialogProps) {
     <Dialog open={open} onOpenChange={() => setOpen && setOpen(!open)}>
       <DialogContent className="sm:max-w-[800px] max-h-[700px] flex flex-col">
         <Form {...form}>
-          {/* Header cố định */}
           <DialogHeader className="flex-shrink-0">
             <DialogTitle>{dialogTitle(type, PAGE.BRAND)}</DialogTitle>
           </DialogHeader>

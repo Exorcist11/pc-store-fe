@@ -1,171 +1,130 @@
 import { cn } from "@/lib/utils";
 import React from "react";
 
-interface ILoadingProps {
-  loading: boolean;
-  children: React.ReactNode;
+interface LoadingWrapperProps {
+  isLoading: boolean;
+  overlay?: boolean;
+  fullScreen?: boolean;
+  text?: string;
+  size?: "sm" | "md" | "lg";
+  blurBackdrop?: boolean;
+  children?: React.ReactNode;
+  className?: string;
 }
 
-export default function LoadingWrapper(props: ILoadingProps) {
-  if (props.loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen ">
-        <div className="loader flex items-center justify-center">
-          <div className="truckWrapper w-[200px] h-[100px] flex flex-col relative items-center justify-end overflow-x-hidden">
-            <div className="truckBody w-[150px] mb-1.5 animate-motion">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 198 93"
-                className="w-full h-auto"
-              >
-                <rect
-                  strokeWidth="3"
-                  stroke="#282828"
-                  fill="#1E90FF"
-                  rx="5"
-                  height="60"
-                  width="180"
-                  y="20"
-                  x="6.5"
-                ></rect>
+export default function LoadingWrapper({
+  isLoading,
+  overlay = true,
+  fullScreen = false,
+  text,
+  size = "md",
+  blurBackdrop = true,
+  children,
+  className = "",
+}: LoadingWrapperProps) {
+  const spinnerSizeClass =
+    size === "sm" ? "w-4 h-4" : size === "lg" ? "w-10 h-10" : "w-6 h-6";
 
-                <rect
-                  strokeWidth="2"
-                  stroke="#282828"
-                  fill="#ADD8E6"
-                  rx="2"
-                  height="20"
-                  width="30"
-                  y="30"
-                  x="20"
-                ></rect>
-                <rect
-                  strokeWidth="2"
-                  stroke="#282828"
-                  fill="#ADD8E6"
-                  rx="2"
-                  height="20"
-                  width="30"
-                  y="30"
-                  x="60"
-                ></rect>
-                <rect
-                  strokeWidth="2"
-                  stroke="#282828"
-                  fill="#ADD8E6"
-                  rx="2"
-                  height="20"
-                  width="30"
-                  y="30"
-                  x="100"
-                ></rect>
-                <rect
-                  strokeWidth="2"
-                  stroke="#282828"
-                  fill="#ADD8E6"
-                  rx="2"
-                  height="20"
-                  width="30"
-                  y="30"
-                  x="140"
-                ></rect>
+  const overlayBase = fullScreen
+    ? "fixed inset-0 z-[9999] flex items-center justify-center"
+    : "absolute inset-0 z-50 flex items-center justify-center";
 
-                <rect
-                  strokeWidth="2"
-                  stroke="#282828"
-                  fill="#ADD8E6"
-                  rx="2"
-                  height="30"
-                  width="20"
-                  y="25"
-                  x="165"
-                ></rect>
+  return (
+    <div className={`relative ${className}`}>
+      {/* children */}
+      <div
+        className={`${
+          isLoading && overlay ? "opacity-60 pointer-events-none" : ""
+        }`}
+      >
+        {children}
+      </div>
 
-                <rect
-                  strokeWidth="2"
-                  stroke="#282828"
-                  fill="#FFFCAB"
-                  rx="1"
-                  height="7"
-                  width="5"
-                  y="63"
-                  x="187"
-                ></rect>
+      {!overlay && isLoading && (
+        <div className="inline-flex items-center gap-2">
+          <svg
+            className={`${spinnerSizeClass} animate-spin`}
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <circle
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+              className="opacity-20"
+            />
+            <path
+              d="M22 12a10 10 0 00-10-10"
+              stroke="currentColor"
+              strokeWidth="4"
+              strokeLinecap="round"
+            />
+          </svg>
+          {text && (
+            <span className="text-sm text-muted-foreground">{text}</span>
+          )}
+        </div>
+      )}
 
-                <rect
-                  strokeWidth="2"
-                  stroke="#282828"
-                  fill="#FFFFFF"
-                  rx="1"
-                  height="8"
-                  width="20"
-                  y="75"
-                  x="165"
-                ></rect>
-              </svg>
-            </div>
-            <div className="truckTires w-[150px] flex justify-between px-4 absolute bottom-0">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 30 30"
-                className="w-6 h-6"
-              >
-                <circle
-                  strokeWidth="3"
-                  stroke="#282828"
-                  fill="#282828"
-                  r="13.5"
-                  cy="15"
-                  cx="15"
-                ></circle>
-                <circle fill="#DFDFDF" r="7" cy="15" cx="15"></circle>
-              </svg>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 30 30"
-                className="w-6 h-6"
-              >
-                <circle
-                  strokeWidth="3"
-                  stroke="#282828"
-                  fill="#282828"
-                  r="13.5"
-                  cy="15"
-                  cx="15"
-                ></circle>
-                <circle fill="#DFDFDF" r="7" cy="15" cx="15"></circle>
-              </svg>
-            </div>
-            <div className="road w-full h-px bg-gray-800 rounded relative">
-              <div className="absolute w-5 h-full bg-gray-800 right-[-50%] rounded animate-road"></div>
-              <div className="absolute w-2.5 h-full bg-gray-800 right-[-65%] rounded animate-road border-l-2 border-white"></div>
-            </div>
+      {/* Overlay loader */}
+      {overlay && isLoading && (
+        <div
+          className={`${overlayBase} ${
+            blurBackdrop && !fullScreen ? "backdrop-blur-sm" : ""
+          }`}
+          aria-live="polite"
+          role="status"
+        >
+          <div
+            className={`flex flex-col items-center justify-center gap-3 p-4 rounded-2xl shadow-lg bg-white/90 dark:bg-slate-900/80 ${
+              fullScreen ? "mx-4" : "max-w-xs"
+            }`}
+            style={{
+              // subtle border blur fallback for older browsers
+              backdropFilter: blurBackdrop
+                ? "saturate(180%) blur(6px)"
+                : "none",
+            }}
+          >
             <svg
-              xmlSpace="preserve"
-              viewBox="0 0 453.459 453.459"
+              className={`${spinnerSizeClass} animate-spin text-sky-600`}
+              viewBox="0 0 24 24"
+              fill="none"
               xmlns="http://www.w3.org/2000/svg"
-              fill="#000000"
-              className="absolute bottom-0 right-[-90%] h-[90px] animate-road"
+              aria-hidden="true"
             >
+              <circle
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+                className="opacity-20"
+              />
               <path
-                d="M252.882,0c-37.781,0-68.686,29.953-70.245,67.358h-6.917v8.954c-26.109,2.163-45.463,10.011-45.463,19.366h9.993
-c-1.65,5.146-2.507,10.54-2.507,16.017c0,28.956,23.558,52.514,52.514,52.514c28.956,0,52.514-23.558,52.514-52.514
-c0-5.478-0.856-10.872-2.506-16.017h9.992c0-9.354-19.352-17.204-45.463-19.366v-8.954h-6.149C200.189,38.779,223.924,16,252.882,16
-c29.952,0,54.32,24.368,54.32,54.32c0,28.774-11.078,37.009-25.105,47.437c-17.444,12.968-37.216,27.667-37.216,78.884v113.914
-h-0.797c-5.068,0-9.174,4.108-9.174,9.177c0,2.844,1.293,5.383,3.321,7.066c-3.432,27.933-26.851,95.744-8.226,115.459v11.202h45.75
-v-11.202c18.625-19.715-4.794-87.527-8.227-115.459c2.029-1.683,3.322-4.223,3.322-7.066c0-5.068-4.107-9.177-9.176-9.177h-0.795
-V196.641c0-43.174,14.942-54.283,30.762-66.043c14.793-10.997,31.559-23.461,31.559-60.277C323.202,31.545,291.656,0,252.882,0z
-M232.77,111.694c0,23.442-19.071,42.514-42.514,42.514c-23.442,0-42.514-19.072-42.514-42.514c0-5.531,1.078-10.957,3.141-16.017
-h78.747C231.693,100.736,232.77,106.162,232.77,111.694z"
-              ></path>
+                d="M22 12a10 10 0 00-10-10"
+                stroke="currentColor"
+                strokeWidth="4"
+                strokeLinecap="round"
+              />
             </svg>
+
+            {text ? (
+              <div className="text-sm text-center text-slate-700 dark:text-slate-200">
+                {text}
+              </div>
+            ) : (
+              <div className="text-sm text-center text-slate-700 dark:text-slate-200">
+                Đang xử lý...
+              </div>
+            )}
           </div>
         </div>
-      </div>
-    );
-  }
-  return <div>{props.children}</div>;
+      )}
+    </div>
+  );
 }

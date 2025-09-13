@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Upload, X, FileImage, Plus, Trash2 } from "lucide-react";
+import toastifyUtils from "@/utils/toastify";
 
 interface ImageUploadProps {
   value?: (File | string)[];
@@ -41,13 +42,27 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       setPreviews([]);
     }
   }, [value]);
-
   const handleFilesChange = (files: FileList | null) => {
     if (!files) return;
-    const fileArray = Array.from(files).slice(0, maxFiles);
+
+    const maxSize = 10 * 1024 * 1024; 
+    const fileArray = Array.from(files)
+      .filter((file) => {
+        if (file.size > maxSize) {
+          toastifyUtils(
+            "error",
+            `⚠️ File "${file.name}" vượt quá dung lượng 10MB, không thể tải lên!`
+          );
+          return false;
+        }
+        return true;
+      })
+      .slice(0, maxFiles);
+
     const newFiles = multiple
       ? [...value, ...fileArray].slice(0, maxFiles)
       : fileArray;
+
     onChange?.(newFiles);
   };
 

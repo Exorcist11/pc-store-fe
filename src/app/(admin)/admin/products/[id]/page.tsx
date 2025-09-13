@@ -1,11 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { IBrand } from "@/interface/brands.interface";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ProductFormData, productSchema } from "@/lib/schema";
 import {
   Form,
   FormControl,
@@ -23,72 +20,136 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { ImageUpload } from "@/components/ImageUpload/ImageUpload";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { X } from "lucide-react";
-import { errorFunc } from "@/lib/errorFunc";
-import slugify from "slugify";
+
+import { X, Plus } from "lucide-react";
+import { ImageUpload } from "@/components/ImageUpload/ImageUpload";
+import { ProductFormData, productSchema } from "@/lib/schema";
+import { ISelectOption } from "@/interface/shared/common";
+import { IApiParams } from "@/interface/shared/api";
+import { getAllBrands } from "@/services/brand";
+import { IBrand } from "@/interface/brands.interface";
 import { getAllCategories } from "@/services/categories";
 import { ICategory } from "@/interface/category.interface";
-import { getAllBrands } from "@/services/brand";
-import { ISelectOption } from "@/interface/shared/common";
+import { ATTRIBUTE_OPTIONS, PRODUCT_TYPES } from "@/constants/productAttribute";
+import { slugify } from "@/utils/slugifyCustom";
+import { useParams, useRouter } from "next/navigation";
+import VariantItem from "@/components/VarientItem/VariantItem";
+import { errorFunc } from "@/lib/errorFunc";
 import { uploadFile } from "@/services/file/file";
 import toastifyUtils from "@/utils/toastify";
-import { PRODUCT_TYPE } from "@/lib/dropdownConstant";
-import { IProduct } from "@/interface/product.interface";
-import axiosInstance from "@/services/api-services";
-import URL_PATHS from "@/services/url-path";
+import LoadingWrapper from "@/components/Loading/LoadingWrapper";
+import { createNewProduct } from "@/services/products";
 
-export default function ProductPage() {
+export default function ProductForm() {
+  const [attributeInput, setAttributeInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [newAttributeName, setNewAttributeName] = useState("");
+  const [BRANDS, setBRANDS] = useState<ISelectOption[]>([]);
+  const [CATEGORIES, setCATEGORIES] = useState<ISelectOption[]>([]);
+
+  const params = useParams();
   const router = useRouter();
-  const params = useParams<{ id: string }>();
-  const [CATEGORIES, setCATEGORIES] = useState<ISelectOption[]>();
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-
-  const [BRANDS, setBRANDS] = useState<ISelectOption[]>();
-
-  const [socketInput, setSocketInput] = useState("");
-  const [memoryTypeInput, setMemoryTypeInput] = useState("");
-  const [tagInput, setTagInput] = useState("");
-
-  const isCreate = params?.id === "new";
+  const isCreateProduct = params.id === "new";
 
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
     defaultValues: {
       name: "",
       slug: "",
-      sku: "",
-      categoryId: "",
-      brandId: "",
-      productType: "",
-      price: 0,
-      comparePrice: 0,
-      costPrice: 0,
-      stock: 0,
-      minStock: 0,
-      weight: 0,
-      shortDescription: "",
       description: "",
-      seoTitle: "",
-      seoDescription: "",
-      compatibility: { sockets: [], memoryTypes: [], maxMemory: 0 },
-      dimensions: { length: 0, width: 0, height: 0 },
-      tags: [],
+      brand: "",
+      category: "",
+      productType: undefined,
+      allowedAttributes: [],
+      variants: [
+        {
+          sku: "",
+          slug: "",
+          price: 0,
+          stock: 0,
+          attributes: {},
+          images: [],
+        },
+      ],
       images: [],
-      isActive: true,
-      isFeatured: false,
+      discount: 0,
     },
   });
+
+  const {
+    fields: variantFields,
+    append: appendVariant,
+    remove: removeVariant,
+  } = useFieldArray({
+    control: form.control,
+    name: "variants",
+  });
+
+  // Auto generate slug from product name
+  const name = form.watch("name");
+  useEffect(() => {
+    if (name) {
+      const newSlug = slugify(name);
+      form.setValue("slug", newSlug);
+    }
+  }, [name, form]);
+
+  const addAllowedAttribute = () => {
+    if (
+      attributeInput &&
+      !form.getValues("allowedAttributes").includes(attributeInput)
+    ) {
+      form.setValue("allowedAttributes", [
+        ...form.getValues("allowedAttributes"),
+        attributeInput,
+      ]);
+      setAttributeInput("");
+    }
+  };
+
+  const addCustomAttribute = () => {
+    if (
+      newAttributeName &&
+      !form.getValues("allowedAttributes").includes(newAttributeName)
+    ) {
+      form.setValue("allowedAttributes", [
+        ...form.getValues("allowedAttributes"),
+        newAttributeName,
+      ]);
+      setNewAttributeName("");
+    }
+  };
+
+  const removeAllowedAttribute = (index: number) => {
+    const updated = [...form.getValues("allowedAttributes")];
+    updated.splice(index, 1);
+    form.setValue("allowedAttributes", updated);
+  };
+
+  const addVariantAttribute = (
+    variantIndex: number,
+    key: string,
+    value: string
+  ) => {
+    if (key && value) {
+      const currentAttributes =
+        form.getValues(`variants.${variantIndex}.attributes`) || {};
+      form.setValue(`variants.${variantIndex}.attributes`, {
+        ...currentAttributes,
+        [key]: value,
+      });
+    }
+  };
+
+  const removeVariantAttribute = (variantIndex: number, key: string) => {
+    const currentAttributes =
+      form.getValues(`variants.${variantIndex}.attributes`) || {};
+    const { [key]: removed, ...rest } = currentAttributes;
+    form.setValue(`variants.${variantIndex}.attributes`, rest);
+  };
 
   const handleUploadImages = async (files: File[]): Promise<string[]> => {
     try {
@@ -110,242 +171,189 @@ export default function ProductPage() {
     }
   };
 
-  // Tự động tạo slug khi tên sản phẩm thay đổi
-  const name = form.watch("name");
-  useEffect(() => {
-    if (name) {
-      const newSlug = slugify(name, { lower: true, strict: true });
-      form.setValue("slug", newSlug);
-    }
-  }, [name, form]);
-
-  const getCATEGORIES = async () => {
-    try {
-      const res = await getAllCategories({ limit: 100 });
-
-      setCATEGORIES(
-        res?.data?.items?.map((item: ICategory) => ({
-          value: item._id,
-          label: item.name,
-        }))
-      );
-    } catch (error) {
-      console.error("Error fetching categories: ", error);
-    }
-  };
-
-  const getBRANDS = async () => {
-    try {
-      const res = await getAllBrands({ limit: 100 });
-
-      setBRANDS(
-        res?.data?.items?.map((item: IBrand) => ({
-          value: item._id,
-          label: item.name,
-        }))
-      );
-    } catch (error) {
-      console.error("Error fetching brands: ", error);
-    }
-  };
-
-  useEffect(() => {
-    getCATEGORIES();
-    getBRANDS();
-  }, [params?.id, isCreate]);
-
   const onSubmit = async (data: ProductFormData) => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
+      // ----- Product Images -----
+      const productFileImages = data.images.filter(
+        (img): img is File => img instanceof File
+      );
+      const productUploadedUrls =
+        productFileImages.length > 0
+          ? await handleUploadImages(productFileImages)
+          : [];
 
-      if (data.images && Array.isArray(data.images)) {
-        // Tách file
-        const files = data.images.filter(
-          (img): img is File => img instanceof File
-        );
+      const productImages = [
+        ...data.images.filter((img): img is string => typeof img === "string"),
+        ...productUploadedUrls,
+      ];
 
-        let uploadedUrls: string[] = [];
-        if (files.length > 0) {
-          uploadedUrls = await handleUploadImages(files);
-        }
+      // ----- Variant Images -----
+      const variants = await Promise.all(
+        data.variants.map(async (v) => {
+          const variantFileImages = v.images.filter(
+            (img): img is File => img instanceof File
+          );
+          const variantUploadedUrls =
+            variantFileImages.length > 0
+              ? await handleUploadImages(variantFileImages)
+              : [];
 
-        // Giữ lại url cũ + gộp với url mới upload
-        const allImages: string[] = [
-          ...data.images.filter(
-            (img): img is string => typeof img === "string"
-          ),
-          ...uploadedUrls,
-        ];
+          return {
+            ...v,
+            images: [
+              ...v.images.filter(
+                (img): img is string => typeof img === "string"
+              ),
+              ...variantUploadedUrls,
+            ],
+          };
+        })
+      );
 
-        form.setValue("images", allImages);
+      // ----- Payload cuối cùng -----
+      const payload = {
+        ...data,
+        images: productImages,
+        variants,
+      };
+
+      if (isCreateProduct) {
+        await createNewProduct(payload);
       }
 
-      const finalData = form.getValues();
-      if (isCreate) {
-        onCreateProduct(finalData);
-        toastifyUtils("success", "Thêm mới sản phẩm thành công!");
-      } else {
-        toastifyUtils("success", "Cập nhật sản phẩm thành công!");
-      }
+      // TODO: gọi API backend tạo product
+      // await createProduct(payload);
+
+      toastifyUtils("success", "Sản phẩm đã được tạo thành công!");
+      form.reset();
     } catch (error) {
-      throw error;
+      console.error("Error creating product:", error);
+      toastifyUtils("error", "Có lỗi xảy ra khi tạo sản phẩm");
     } finally {
       setIsLoading(false);
-      // router.back();
+      router.push("/admin/products");
     }
   };
 
-  const onCreateProduct = async (payload: ProductFormData) => {
+  const selectedProductType = form.watch("productType");
+  const availableAttributes = selectedProductType
+    ? ATTRIBUTE_OPTIONS[selectedProductType]
+    : [];
+
+  const getLookUp = async () => {
+    const params: IApiParams = {
+      limit: 100,
+    };
     try {
-      const res = await axiosInstance({
-        method: "POST",
-        url: `${URL_PATHS.PRODUCTS}`,
-        data: payload,
-      });
+      const getBrands = await getAllBrands(params);
+      setBRANDS(
+        getBrands.data.items.map((item: IBrand) => ({
+          value: item._id,
+          label: item.name,
+        }))
+      );
 
-      return res.data;
+      const getCategories = await getAllCategories(params);
+      setCATEGORIES(
+        getCategories.data.items.map((item: ICategory) => ({
+          value: item._id,
+          label: item.name,
+        }))
+      );
     } catch (error) {
-      throw error;
+      console.log("Error fetching lookup: ", error);
     }
   };
 
-  const addSocket = () => {
-    if (socketInput) {
-      form.setValue("compatibility.sockets", [
-        ...form.getValues("compatibility.sockets"),
-        socketInput,
-      ]);
-      setSocketInput("");
-    }
-  };
-
-  const removeSocket = (index: number) => {
-    const updated = [...form.getValues("compatibility.sockets")];
-    updated.splice(index, 1);
-    form.setValue("compatibility.sockets", updated);
-  };
-
-  const addMemoryType = () => {
-    if (memoryTypeInput) {
-      form.setValue("compatibility.memoryTypes", [
-        ...form.getValues("compatibility.memoryTypes"),
-        memoryTypeInput,
-      ]);
-      setMemoryTypeInput("");
-    }
-  };
-
-  const removeMemoryType = (index: number) => {
-    const updated = [...form.getValues("compatibility.memoryTypes")];
-    updated.splice(index, 1);
-    form.setValue("compatibility.memoryTypes", updated);
-  };
-
-  const addTag = () => {
-    if (tagInput) {
-      form.setValue("tags", [...form.getValues("tags"), tagInput]);
-      setTagInput("");
-    }
-  };
-
-  const removeTag = (index: number) => {
-    const updated = [...form.getValues("tags")];
-    updated.splice(index, 1);
-    form.setValue("tags", updated);
-  };
+  useEffect(() => {
+    getLookUp();
+  }, []);
 
   return (
-    <div className="px-6 space-y-6 max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold tracking-tight">
-        {isCreate ? "Tạo sản phẩm mới" : "Chỉnh sửa sản phẩm"}
-      </h1>
+    <div className="container mx-auto px-4 max-w-7xl">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight">Tạo sản phẩm mới</h1>
+        <p className="text-muted-foreground mt-2">
+          Tạo sản phẩm với nhiều biến thể và thuộc tính tùy chỉnh
+        </p>
+      </div>
 
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit, errorFunc)}
-          className="space-y-6"
-        >
-          {/* Main content grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Left column */}
-            <div className="md:col-span-2 space-y-6">
-              {/* Hình ảnh */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Hình ảnh</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <FormField
-                    control={form.control}
-                    name="images"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <ImageUpload
-                            value={field.value || []}
-                            onChange={(files) => field.onChange(files)}
-                            multiple
-                            maxFiles={5}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
+      <LoadingWrapper
+        isLoading={isLoading}
+        overlay
+        fullScreen
+        text="Đang lưu dữ liệu"
+        size="md"
+      >
+        <Form {...form}>
+          <div className="space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Left Column - Main Product Info */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Basic Information */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Thông tin cơ bản</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem
+                            className={`${isCreateProduct && "col-span-2"}`}
+                          >
+                            <FormLabel>Tên sản phẩm *</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Nhập tên sản phẩm"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      {!isCreateProduct && (
+                        <FormField
+                          control={form.control}
+                          name="slug"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Slug</FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="auto-generated-slug"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+                    </div>
 
-              {/* Thông tin cơ bản */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Thông tin cơ bản</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Tên sản phẩm</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Nhập tên sản phẩm" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="slug"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Slug (đường dẫn)</FormLabel>
-                          <FormControl>
-                            <Input placeholder="vd: cpu-intel-i9" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="categoryId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Danh mục</FormLabel>
-                          <FormControl>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="category"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Danh mục *</FormLabel>
                             <Select
                               value={field.value}
                               onValueChange={field.onChange}
                             >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Chọn danh mục" />
-                              </SelectTrigger>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Chọn danh mục" />
+                                </SelectTrigger>
+                              </FormControl>
                               <SelectContent>
-                                {CATEGORIES?.map((category) => (
+                                {CATEGORIES.map((category) => (
                                   <SelectItem
                                     key={category.value}
                                     value={category.value}
@@ -355,27 +363,27 @@ export default function ProductPage() {
                                 ))}
                               </SelectContent>
                             </Select>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="brandId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Thương hiệu</FormLabel>
-                          <FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="brand"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Thương hiệu *</FormLabel>
                             <Select
                               value={field.value}
                               onValueChange={field.onChange}
                             >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Chọn thương hiệu" />
-                              </SelectTrigger>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Chọn thương hiệu" />
+                                </SelectTrigger>
+                              </FormControl>
                               <SelectContent>
-                                {BRANDS?.map((brand) => (
+                                {BRANDS.map((brand) => (
                                   <SelectItem
                                     key={brand.value}
                                     value={brand.value}
@@ -385,564 +393,405 @@ export default function ProductPage() {
                                 ))}
                               </SelectContent>
                             </Select>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="sku"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Mã SKU</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Nhập mã SKU" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="productType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Loại sản phẩm</FormLabel>
-                          <FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="productType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Loại sản phẩm *</FormLabel>
                             <Select
                               value={field.value}
                               onValueChange={field.onChange}
                             >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Chọn loại sản phẩm" />
-                              </SelectTrigger>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Chọn loại" />
+                                </SelectTrigger>
+                              </FormControl>
                               <SelectContent>
-                                {PRODUCT_TYPE?.map((brand) => (
+                                {PRODUCT_TYPES.map((type) => (
                                   <SelectItem
-                                    key={brand.value}
-                                    value={brand.value}
+                                    key={type.value}
+                                    value={type.value}
                                   >
-                                    {brand.label}
+                                    {type.label}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
 
-              {/* Mô tả sản phẩm */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Mô tả sản phẩm</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="shortDescription"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Mô tả ngắn</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Mô tả ngắn" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Mô tả chi tiết</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="Mô tả chi tiết"
-                            rows={5}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
-
-              {/* Khả năng tương thích */}
-              <Accordion type="single" collapsible>
-                <AccordionItem value="compatibility">
-                  <AccordionTrigger>Khả năng tương thích</AccordionTrigger>
-                  <AccordionContent>
-                    <Card>
-                      <CardContent className="space-y-4 p-6">
-                        <FormField
-                          control={form.control}
-                          name="compatibility.sockets"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Socket</FormLabel>
-                              <FormControl>
-                                <div className="flex gap-2">
-                                  <Input
-                                    value={socketInput}
-                                    onChange={(e) =>
-                                      setSocketInput(e.target.value)
-                                    }
-                                    placeholder="Thêm socket (vd: LGA1200)"
-                                  />
-                                  <Button type="button" onClick={addSocket}>
-                                    Thêm
-                                  </Button>
-                                </div>
-                              </FormControl>
-                              <div className="flex flex-wrap gap-2 mt-2">
-                                {field.value.map((socket, index) => (
-                                  <Badge
-                                    key={index}
-                                    variant="secondary"
-                                    className="flex items-center gap-1"
-                                  >
-                                    {socket}
-                                    <X
-                                      size={12}
-                                      className="cursor-pointer"
-                                      onClick={() => removeSocket(index)}
-                                    />
-                                  </Badge>
-                                ))}
-                              </div>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="compatibility.memoryTypes"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Loại bộ nhớ</FormLabel>
-                              <FormControl>
-                                <div className="flex gap-2">
-                                  <Input
-                                    value={memoryTypeInput}
-                                    onChange={(e) =>
-                                      setMemoryTypeInput(e.target.value)
-                                    }
-                                    placeholder="Thêm loại bộ nhớ (vd: DDR4)"
-                                  />
-                                  <Button type="button" onClick={addMemoryType}>
-                                    Thêm
-                                  </Button>
-                                </div>
-                              </FormControl>
-                              <div className="flex flex-wrap gap-2 mt-2">
-                                {field.value.map((type, index) => (
-                                  <Badge
-                                    key={index}
-                                    variant="secondary"
-                                    className="flex items-center gap-1"
-                                  >
-                                    {type}
-                                    <X
-                                      size={12}
-                                      className="cursor-pointer"
-                                      onClick={() => removeMemoryType(index)}
-                                    />
-                                  </Badge>
-                                ))}
-                              </div>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="compatibility.maxMemory"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Bộ nhớ tối đa (GB)</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  min={0}
-                                  {...field}
-                                  onChange={(e) =>
-                                    field.onChange(Number(e.target.value))
-                                  }
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </CardContent>
-                    </Card>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            </div>
-
-            {/* Right column */}
-            <div className="space-y-6">
-              {/* Giá và kho */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Giá & Kho</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="price"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Giá bán</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min={0}
-                            step="0.01"
-                            placeholder="0"
-                            {...field}
-                            onChange={(e) =>
-                              field.onChange(Number(e.target.value))
-                            }
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="comparePrice"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Giá gốc (so sánh)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min={0}
-                            step="0.01"
-                            placeholder="0"
-                            {...field}
-                            onChange={(e) =>
-                              field.onChange(Number(e.target.value))
-                            }
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="costPrice"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Giá vốn</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min={0}
-                            step="0.01"
-                            placeholder="0"
-                            {...field}
-                            onChange={(e) =>
-                              field.onChange(Number(e.target.value))
-                            }
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="stock"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tồn kho</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min={0}
-                            placeholder="0"
-                            {...field}
-                            onChange={(e) =>
-                              field.onChange(Number(e.target.value))
-                            }
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="minStock"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tồn kho tối thiểu</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min={0}
-                            placeholder="0"
-                            {...field}
-                            onChange={(e) =>
-                              field.onChange(Number(e.target.value))
-                            }
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
-
-              {/* Trạng thái & Thẻ */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Trạng thái & Thẻ</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
                     <FormField
                       control={form.control}
-                      name="isActive"
+                      name="description"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Kích hoạt</FormLabel>
+                          <FormLabel>Mô tả sản phẩm</FormLabel>
                           <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
+                            <Textarea
+                              placeholder="Mô tả chi tiết về sản phẩm..."
+                              rows={4}
+                              {...field}
                             />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+                  </CardContent>
+                </Card>
+
+                {/* Product Images */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Hình ảnh sản phẩm chung</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      Hình ảnh đại diện cho toàn bộ sản phẩm
+                    </p>
+                  </CardHeader>
+                  <CardContent>
                     <FormField
                       control={form.control}
-                      name="isFeatured"
+                      name="images"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Nổi bật</FormLabel>
                           <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
+                            <ImageUpload
+                              value={field.value || []}
+                              onChange={(files) => field.onChange(files)}
+                              multiple
+                              maxFiles={5}
                             />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                  </div>
-                  <FormField
-                    control={form.control}
-                    name="tags"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Thẻ (tags)</FormLabel>
-                        <FormControl>
-                          <div className="flex gap-2">
+                  </CardContent>
+                </Card>
+
+                {/* Allowed Attributes */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Thuộc tính được phép</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      Định nghĩa các thuộc tính mà biến thể có thể sử dụng
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Predefined attributes */}
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">
+                        Thuộc tính có sẵn:
+                      </label>
+                      <div className="flex gap-2">
+                        <Select
+                          value={attributeInput}
+                          onValueChange={setAttributeInput}
+                          disabled={!availableAttributes?.length}
+                        >
+                          <SelectTrigger className="flex-1">
+                            <SelectValue placeholder="Chọn thuộc tính" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableAttributes.map((attr) => (
+                              <SelectItem key={attr} value={attr}>
+                                {attr}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          type="button"
+                          onClick={addAllowedAttribute}
+                          size="sm"
+                          disabled={!availableAttributes?.length}
+                        >
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Custom attributes */}
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">
+                        Thuộc tính tùy chỉnh:
+                      </label>
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Nhập tên thuộc tính mới"
+                          value={newAttributeName}
+                          onChange={(e) => setNewAttributeName(e.target.value)}
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          onClick={addCustomAttribute}
+                          size="sm"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {form
+                        .watch("allowedAttributes")
+                        .map((attribute, index) => (
+                          <Badge
+                            key={index}
+                            variant="secondary"
+                            className="flex items-center gap-1"
+                          >
+                            {attribute}
+                            <X
+                              className="w-3 h-3 cursor-pointer hover:text-destructive"
+                              onClick={() => removeAllowedAttribute(index)}
+                            />
+                          </Badge>
+                        ))}
+                    </div>
+                    <FormMessage />
+                  </CardContent>
+                </Card>
+
+                {/* Product Variants */}
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                      <CardTitle>Biến thể sản phẩm</CardTitle>
+                      <p className="text-sm text-muted-foreground">
+                        Quản lý các biến thể khác nhau của sản phẩm
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        appendVariant({
+                          sku: "",
+                          slug: "",
+                          price: 0,
+                          stock: 0,
+                          attributes: {},
+                          images: [],
+                        })
+                      }
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Thêm biến thể
+                    </Button>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-6">
+                      {variantFields.map((variant, index) => (
+                        <VariantItem
+                          key={variant.id}
+                          variant={variant}
+                          index={index}
+                          form={form}
+                          variantFields={variantFields}
+                          isCreateProduct={isCreateProduct}
+                          removeVariant={removeVariant}
+                          addVariantAttribute={addVariantAttribute}
+                          removeVariantAttribute={removeVariantAttribute}
+                        />
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Right Column - Additional Info */}
+              <div className="space-y-6">
+                {/* Discount */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Khuyến mãi</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <FormField
+                      control={form.control}
+                      name="discount"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Giảm giá (%)</FormLabel>
+                          <FormControl>
                             <Input
-                              value={tagInput}
-                              onChange={(e) => setTagInput(e.target.value)}
-                              placeholder="Thêm thẻ (vd: gaming)"
+                              type="number"
+                              min={0}
+                              max={100}
+                              placeholder="0"
+                              {...field}
+                              onChange={(e) =>
+                                field.onChange(Number(e.target.value))
+                              }
                             />
-                            <Button type="button" onClick={addTag}>
-                              Thêm
-                            </Button>
+                          </FormControl>
+                          <FormMessage />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Nhập số từ 0-100 (%)
+                          </p>
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
+
+                {/* Preview */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Xem trước</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-sm space-y-2">
+                      <div className="flex justify-between">
+                        <span className="font-medium">Tên:</span>
+                        <span className="text-right">
+                          {form.watch("name") || "Chưa có"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium">Slug:</span>
+                        <span className="text-right text-muted-foreground">
+                          {form.watch("slug") || "chưa-có"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium">Loại:</span>
+                        <span className="text-right">
+                          {PRODUCT_TYPES.find(
+                            (t) => t.value === form.watch("productType")
+                          )?.label || "Chưa chọn"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium">Thương hiệu:</span>
+                        <span className="text-right">
+                          {BRANDS.find((b) => b.value === form.watch("brand"))
+                            ?.label || "Chưa chọn"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium">Danh mục:</span>
+                        <span className="text-right">
+                          {CATEGORIES.find(
+                            (c) => c.value === form.watch("category")
+                          )?.label || "Chưa chọn"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium">Số biến thể:</span>
+                        <span className="text-right font-semibold text-blue-600">
+                          {variantFields.length}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium">Thuộc tính:</span>
+                        <span className="text-right font-semibold text-green-600">
+                          {form.watch("allowedAttributes").length}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium">Giảm giá:</span>
+                        <span className="text-right">
+                          {form.watch("discount")}%
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium">Hình ảnh chung:</span>
+                        <span className="text-right">
+                          {form.watch("images").length} ảnh
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Pricing Summary */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Tóm tắt giá</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-sm space-y-2">
+                      {variantFields.map((_, index) => {
+                        const variant = form.watch(`variants.${index}`);
+                        const price = variant?.price || 0;
+                        const discountedPrice =
+                          price * (1 - form.watch("discount") / 100);
+
+                        return (
+                          <div key={index} className="border-b pb-2">
+                            <div className="font-medium">
+                              Biến thể #{index + 1}{" "}
+                              {variant?.sku && `(${variant.sku})`}
+                            </div>
+                            <div className="flex justify-between text-xs text-muted-foreground">
+                              <span>Giá gốc:</span>
+                              <span>{price.toLocaleString("vi-VN")}đ</span>
+                            </div>
+                            {form.watch("discount") > 0 && (
+                              <div className="flex justify-between text-xs font-medium text-red-600">
+                                <span>Giá sau giảm:</span>
+                                <span>
+                                  {discountedPrice.toLocaleString("vi-VN")}đ
+                                </span>
+                              </div>
+                            )}
+                            <div className="flex justify-between text-xs text-muted-foreground">
+                              <span>Tồn kho:</span>
+                              <span>{variant?.stock || 0}</span>
+                            </div>
                           </div>
-                        </FormControl>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {field.value.map((tag, index) => (
-                            <Badge
-                              key={index}
-                              variant="secondary"
-                              className="flex items-center gap-1"
-                            >
-                              {tag}
-                              <X
-                                size={12}
-                                className="cursor-pointer"
-                                onClick={() => removeTag(index)}
-                              />
-                            </Badge>
-                          ))}
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
 
-              {/* Thuộc tính vật lý */}
-              <Accordion type="single" collapsible>
-                <AccordionItem value="physical-attributes">
-                  <AccordionTrigger>Thuộc tính vật lý</AccordionTrigger>
-                  <AccordionContent>
-                    <Card>
-                      <CardContent className="space-y-4 p-6">
-                        <FormField
-                          control={form.control}
-                          name="weight"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Trọng lượng (kg)</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  step="0.01"
-                                  min={0}
-                                  {...field}
-                                  onChange={(e) =>
-                                    field.onChange(Number(e.target.value))
-                                  }
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <div className="grid grid-cols-3 gap-2">
-                          <FormField
-                            control={form.control}
-                            name="dimensions.length"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Dài (cm)</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    type="number"
-                                    step="0.01"
-                                    min={0}
-                                    {...field}
-                                    onChange={(e) =>
-                                      field.onChange(Number(e.target.value))
-                                    }
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="dimensions.width"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Rộng (cm)</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    type="number"
-                                    step="0.01"
-                                    min={0}
-                                    {...field}
-                                    onChange={(e) =>
-                                      field.onChange(Number(e.target.value))
-                                    }
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="dimensions.height"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Cao (cm)</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    type="number"
-                                    step="0.01"
-                                    min={0}
-                                    {...field}
-                                    onChange={(e) =>
-                                      field.onChange(Number(e.target.value))
-                                    }
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
+                {/* Validation Summary */}
+                {/* <FormStatusCard form={form} /> */}
+              </div>
+            </div>
 
-              {/* SEO & Nâng cao */}
-              <Accordion type="single" collapsible>
-                <AccordionItem value="seo">
-                  <AccordionTrigger>SEO & Nâng cao</AccordionTrigger>
-                  <AccordionContent>
-                    <Card>
-                      <CardContent className="space-y-4 p-6">
-                        <FormField
-                          control={form.control}
-                          name="seoTitle"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>SEO Title</FormLabel>
-                              <FormControl>
-                                <Input placeholder="SEO Title" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="seoDescription"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>SEO Description</FormLabel>
-                              <FormControl>
-                                <Textarea
-                                  placeholder="SEO Description"
-                                  rows={3}
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </CardContent>
-                    </Card>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
+            {/* Submit Actions */}
+            <div className="flex justify-end items-center pt-6 border-t bg-white sticky bottom-0 z-10 pb-4">
+              <div className="flex items-center gap-4">
+                <Button type="button" variant="outline">
+                  Hủy
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  onClick={form.handleSubmit(onSubmit, errorFunc)}
+                  className="min-w-[120px]"
+                >
+                  {isLoading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Đang tạo...
+                    </div>
+                  ) : (
+                    "Tạo sản phẩm"
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
-          {/* Sticky footer */}
-          <div className="sticky bottom-0 bg-white p-4 border-t flex justify-end">
-            <Button type="submit">
-              {isCreate ? "Tạo sản phẩm" : "Cập nhật"}
-            </Button>
-          </div>
-        </form>
-      </Form>
+        </Form>
+      </LoadingWrapper>
+
+      {/* <FormDebugPanel form={form} /> */}
     </div>
   );
 }
