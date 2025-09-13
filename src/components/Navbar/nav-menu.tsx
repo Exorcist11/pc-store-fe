@@ -14,9 +14,12 @@ export const NavMenu = (props: NavigationMenuProps) => {
   const pathname = usePathname();
   const menus = [
     { path: "/", label: "Trang chủ" },
-    { path: "/tin-tuc", label: "Tin tức" },
-    { path: "/gioi-thieu", label: "Giới thiệu" },
-    { path: "/dich-vu", label: "Dịch vụ" },
+    { path: "/laptop", label: "Laptop" },
+    { path: "/pc", label: "PC - Máy tính để bàn" },
+    { path: "/linh-kien", label: "Linh kiện" },
+    { path: "/man-hinh", label: "Màn hình" },
+    { path: "/phu-kien", label: "Phụ kiện" },
+    { path: "/khuyen-mai", label: "Khuyến mãi" },
     { path: "/lien-he", label: "Liên hệ" },
   ];
 
@@ -31,9 +34,9 @@ export const NavMenu = (props: NavigationMenuProps) => {
                 className={cn(
                   "relative inline-block px-4 py-2 transition-all duration-200 cursor-pointer",
                   pathname === menu.path
-                    ? "text-highlight laptop:font-bold desktop:font-bold"
+                    ? "text-white laptop:font-bold desktop:font-bold"
                     : "text-textInverse",
-                  "before:content-[''] before:absolute before:left-0 before:bottom-0 before:h-[2px] before:w-0 before:bg-highlight before:transition-all before:duration-300 hover:before:w-full"
+                  "before:content-[''] before:absolute before:left-0 before:bottom-0 before:h-[2px] before:w-0 before:bg-white before:transition-all before:duration-300 hover:before:w-full"
                 )}
               >
                 {menu.label}

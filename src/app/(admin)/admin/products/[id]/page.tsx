@@ -816,7 +816,7 @@ export default function ProductForm() {
                   Hủy
                 </Button>
                 <Button
-                  type="submit"
+                  type="submit" 
                   disabled={isLoading}
                   onClick={form.handleSubmit(onSubmit, errorFunc)}
                   className="min-w-[120px]"

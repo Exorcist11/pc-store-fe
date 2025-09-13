@@ -21,14 +21,14 @@ export const NavigationSheet = () => {
       </SheetTrigger>
       <SheetContent
         aria-label="Navigation"
-        className="bg-darkBurgundy border-l-0"
+        className="bg-brandeisBlue border-l-0"
       >
         <VisuallyHidden>
           <SheetTitle>Navigation</SheetTitle>
         </VisuallyHidden>
-    <Link href="/">
-      <Logo />
-    </Link>
+        <Link href="/">
+          <Logo />
+        </Link>
         <NavMenu orientation="vertical" className="mt-12" />
       </SheetContent>
     </Sheet>
