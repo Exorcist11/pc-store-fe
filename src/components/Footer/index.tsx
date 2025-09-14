@@ -15,34 +15,26 @@ import Link from "next/link";
 
 const footerSections = [
   {
-    title: "Tuyến xe phổ biến",
+    title: "Danh mục sản phẩm",
     links: [
       {
-        title: "BX Giáp Bát - Nông Cống",
+        title: "Laptop",
         href: "#",
       },
       {
-        title: "BX Giáp Bát - Như Thanh",
+        title: "PC - Máy tính để bàn",
         href: "#",
       },
       {
-        title: "BX Mỹ Đình - Nông Cống",
+        title: "Linh kiện máy tính",
         href: "#",
       },
       {
-        title: "BX Gia Lâm - Nông Cống",
+        title: "Màn hình",
         href: "#",
       },
       {
-        title: "BX Mỹ Đình - Như Thanh",
-        href: "#",
-      },
-      {
-        title: "Nông Cống - Thái Nguyên",
-        href: "#",
-      },
-      {
-        title: "Nông Cống - Bắc Ninh",
+        title: "Phụ kiện",
         href: "#",
       },
     ],
@@ -118,15 +110,18 @@ const Footer03Page = () => {
                 />
               </svg>
 
-              <div className="mt-4 text-muted-foreground flex flex-col gap-2">
-                <h2 className="uppercase font-bold">
-                  Công ty TNHH Vận Tải Đông Lý
-                </h2>
+              <div className="mt-4 text-muted-foreground flex flex-col gap-3">
+                <div className="flex flex-col gap-1">
+                  <h2 className="uppercase font-bold text-2xl">
+                    <span className="text-brandeisBlue">PC</span>{" "}
+                    <span className="text-black">Store</span>
+                  </h2>
+                  <Separator className="h-0.5 w-16 bg-brandeisBlue" />
+                </div>
                 <p className="text-sm text-justify">
-                  Chúng tôi cung cấp đặt vé nhanh chóng, lịch trình chính xác,
-                  và thanh toán an toàn. Xe đời mới, ghế ngồi êm ái, tài xế
-                  chuyên nghiệp đảm bảo chuyến đi thoải mái và an toàn. Hỗ trợ
-                  khách hàng 24/7, luôn đồng hành trên mọi hành trình!
+                  Chúng tôi là đơn vị tin cậy chuyên cung cấp các sản phẩm máy
+                  tính, linh kiện và phụ kiện công nghệ chính hãng với giá tốt
+                  nhất
                 </p>
                 {/* <div className="flex text-sm items-center gap-2">
                   <Locate size={16} /> Số nhà ...
@@ -151,7 +146,7 @@ const Footer03Page = () => {
                     <li key={title} className="text-sm ">
                       <Link
                         href={href}
-                        className="text-muted-foreground hover:text-foreground"
+                        className="text-muted-foreground hover:text-brandeisBlue"
                       >
                         {title}
                       </Link>

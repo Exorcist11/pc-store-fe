@@ -53,6 +53,7 @@ export default function DialogBrand(props: IDialogProps) {
   };
 
   const handleGetBrandById = async () => {
+    setIsLoading(true);
     try {
       const response = await getBrandById(id);
       if (response) {
@@ -66,6 +67,8 @@ export default function DialogBrand(props: IDialogProps) {
       }
     } catch (error) {
       console.error("Error fetching brand: ", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -96,7 +99,7 @@ export default function DialogBrand(props: IDialogProps) {
       const dataSend: IBrand = {
         name: payload.name,
         logo: String(payload?.logo),
-        slug: payload.slug,
+        slug: String(payload.slug),
         description: String(payload.description),
         isActive: payload.isActive,
       };
@@ -127,113 +130,95 @@ export default function DialogBrand(props: IDialogProps) {
     <Dialog open={open} onOpenChange={() => setOpen && setOpen(!open)}>
       <DialogContent className="sm:max-w-[800px] max-h-[700px] flex flex-col">
         <Form {...form}>
-          <DialogHeader className="flex-shrink-0">
-            <DialogTitle>{dialogTitle(type, PAGE.BRAND)}</DialogTitle>
-          </DialogHeader>
+          <form onSubmit={form.handleSubmit(onSubmit, errorFunc)}>
+            <DialogHeader className="flex-shrink-0">
+              <DialogTitle>{dialogTitle(type, PAGE.BRAND)}</DialogTitle>
+            </DialogHeader>
 
-          {type === ACTION.DELETE ? (
-            <>
-              <div className="flex-1 overflow-auto py-4">
-                <h3>
-                  Bạn có xác nhận xóa thương hiệu trên. Dữ liệu xóa không thể
-                  khôi phục!
-                </h3>
-              </div>
-              {/* Footer cố định */}
-              <DialogFooter className="flex-shrink-0 border-t pt-4">
-                <div className="flex gap-2 items-center justify-end w-full">
-                  <Button
-                    type="reset"
-                    variant={"outline"}
-                    disabled={isLoading}
-                    onClick={() => setOpen(false)}
-                  >
-                    Hủy bỏ
-                  </Button>
-
-                  <Button
-                    type="button"
-                    variant={"destructive"}
-                    disabled={isLoading}
-                    onClick={onDelete}
-                  >
-                    Xác nhận
-                  </Button>
+            {type === ACTION.DELETE ? (
+              <>
+                <div className="flex-1 overflow-auto py-4">
+                  <h3>
+                    Bạn có xác nhận xóa thương hiệu trên. Dữ liệu xóa không thể
+                    khôi phục!
+                  </h3>
                 </div>
-              </DialogFooter>
-            </>
-          ) : (
-            <>
-              {/* Nội dung cuộn được */}
-              <div className="flex-1 overflow-auto hide-scrollbar py-4">
-                {isLoading ? (
-                  <div className="flex flex-col gap-5">
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
+                {/* Footer cố định */}
+                <DialogFooter className="flex-shrink-0 border-t pt-4">
+                  <div className="flex gap-2 items-center justify-end w-full">
+                    <Button
+                      type="reset"
+                      variant={"outline"}
+                      disabled={isLoading}
+                      onClick={() => setOpen(false)}
+                    >
+                      Hủy bỏ
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant={"destructive"}
+                      disabled={isLoading}
+                      onClick={onDelete}
+                    >
+                      Xác nhận
+                    </Button>
                   </div>
-                ) : (
-                  <form
-                    onSubmit={form.handleSubmit(onSubmit, errorFunc)}
-                    className="flex flex-col gap-5"
-                  >
-                    {/* Logo */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="logo"
-                        render={({ field }) => {
-                          const value = field.value;
-                          const valueArray = value ? [value] : [];
-                          return (
-                            <FormItem>
-                              <FormLabel className="font-bold">Logo</FormLabel>
-                              <FormControl>
-                                <ImageUpload
-                                  value={valueArray}
-                                  onChange={(files) => field.onChange(files[0])}
-                                  multiple={false}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          );
-                        }}
-                      />
+                </DialogFooter>
+              </>
+            ) : (
+              <>
+                {/* Nội dung cuộn được */}
+                <div className="flex-1 overflow-auto hide-scrollbar py-4">
+                  {isLoading ? (
+                    <div className="flex flex-col gap-5">
+                      <Skeleton className="h-10 w-full" />
+                      <Skeleton className="h-10 w-full" />
+                      <Skeleton className="h-10 w-full" />
+                      <Skeleton className="h-10 w-full" />
                     </div>
-
-                    {/* Name + Slug */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem className={id ? "" : "col-span-2"}>
-                            <FormControl>
-                              <InputWithLabel
-                                {...field}
-                                placeholder="Tên thương hiệu"
-                                title="Tên thương hiệu"
-                                type="text"
-                                disable={type === ACTION.VIEW || isLoading}
-                                isRequired
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-
-                      {(id || type === ACTION.EDIT || type === ACTION.VIEW) && (
+                  ) : (
+                    <div className="flex flex-col gap-5">
+                      {/* Logo */}
+                      <div className="grid grid-cols-2 gap-4">
                         <FormField
                           control={form.control}
-                          name="slug"
+                          name="logo"
+                          render={({ field }) => {
+                            const value = field.value;
+                            const valueArray = value ? [value] : [];
+                            return (
+                              <FormItem>
+                                <FormLabel className="font-bold">
+                                  Logo
+                                </FormLabel>
+                                <FormControl>
+                                  <ImageUpload
+                                    value={valueArray}
+                                    onChange={(files) =>
+                                      field.onChange(files[0])
+                                    }
+                                    multiple={false}
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            );
+                          }}
+                        />
+                      </div>
+
+                      {/* Name + Slug */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="name"
                           render={({ field }) => (
-                            <FormItem>
+                            <FormItem className={id ? "" : "col-span-2"}>
                               <FormControl>
                                 <InputWithLabel
                                   {...field}
-                                  placeholder="Slug"
-                                  title="Slug"
+                                  placeholder="Tên thương hiệu"
+                                  title="Tên thương hiệu"
                                   type="text"
                                   disable={type === ACTION.VIEW || isLoading}
                                   isRequired
@@ -242,88 +227,111 @@ export default function DialogBrand(props: IDialogProps) {
                             </FormItem>
                           )}
                         />
-                      )}
-                    </div>
 
-                    {/* Description */}
-                    <FormField
-                      control={form.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <InputWithLabel
-                              {...field}
-                              placeholder="Mô tả"
-                              title="Mô tả"
-                              type="text"
-                              as="textarea"
-                              disable={type === ACTION.VIEW || isLoading}
-                              isRequired
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-
-                    {/* Status */}
-                    <FormField
-                      control={form.control}
-                      name="isActive"
-                      render={({ field }) => (
-                        <FormItem className="w-full flex-col flex">
-                          <FormLabel className="font-bold">
-                            Trạng thái
-                          </FormLabel>
-                          <Switch
-                            disabled={type === ACTION.VIEW}
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                            className="data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+                        {(id ||
+                          type === ACTION.EDIT ||
+                          type === ACTION.VIEW) && (
+                          <FormField
+                            control={form.control}
+                            name="slug"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <InputWithLabel
+                                    {...field}
+                                    placeholder="Slug"
+                                    title="Slug"
+                                    type="text"
+                                    disable={type === ACTION.VIEW || isLoading}
+                                    isRequired
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
                           />
-                        </FormItem>
-                      )}
-                    />
-                  </form>
-                )}
-              </div>
+                        )}
+                      </div>
 
-              {/* Footer cố định */}
-              <DialogFooter className="flex-shrink-0 border-t pt-4">
-                <div className="flex gap-2 items-center justify-end w-full">
-                  <Button
-                    type="reset"
-                    variant={"outline"}
-                    disabled={isLoading}
-                    onClick={() => setOpen(false)}
-                    className="min-w-[120px]"
-                  >
-                    Hủy bỏ
-                  </Button>
-                  {type === ACTION.VIEW && (
-                    <Button
-                      type="button"
-                      disabled={isLoading}
-                      onClick={() => setType(ACTION.EDIT)}
-                      className="min-w-[120px]"
-                    >
-                      Chỉnh sửa
-                    </Button>
-                  )}
+                      {/* Description */}
+                      <FormField
+                        control={form.control}
+                        name="description"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <InputWithLabel
+                                {...field}
+                                placeholder="Mô tả"
+                                title="Mô tả"
+                                type="text"
+                                as="textarea"
+                                disable={type === ACTION.VIEW || isLoading}
+                                isRequired
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
 
-                  {type !== ACTION.VIEW && (
-                    <Button
-                      type="submit"
-                      disabled={isLoading}
-                      className="min-w-[120px]"
-                    >
-                      {isLoading ? "Loading..." : "Lưu"}
-                    </Button>
+                      {/* Status */}
+                      <FormField
+                        control={form.control}
+                        name="isActive"
+                        render={({ field }) => (
+                          <FormItem className="w-full flex-col flex">
+                            <FormLabel className="font-bold">
+                              Trạng thái
+                            </FormLabel>
+                            <Switch
+                              disabled={type === ACTION.VIEW}
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              className="data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+                            />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                   )}
                 </div>
-              </DialogFooter>
-            </>
-          )}
+
+                {/* Footer cố định */}
+                <DialogFooter className="flex-shrink-0 border-t pt-4">
+                  <div className="flex gap-2 items-center justify-end w-full">
+                    <Button
+                      type="reset"
+                      variant={"outline"}
+                      disabled={isLoading}
+                      onClick={() => setOpen(false)}
+                      className="min-w-[120px]"
+                    >
+                      Hủy bỏ
+                    </Button>
+                    {type === ACTION.VIEW && (
+                      <Button
+                        type="button"
+                        disabled={isLoading}
+                        onClick={() => setType(ACTION.EDIT)}
+                        className="min-w-[120px]"
+                      >
+                        Chỉnh sửa
+                      </Button>
+                    )}
+
+                    {type !== ACTION.VIEW && (
+                      <Button
+                        type="submit"
+                        disabled={isLoading}
+                        className="min-w-[120px]"
+                      >
+                        {isLoading ? "Loading..." : "Lưu"}
+                      </Button>
+                    )}
+                  </div>
+                </DialogFooter>
+              </>
+            )}
+          </form>
         </Form>
       </DialogContent>
     </Dialog>

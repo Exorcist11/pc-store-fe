@@ -6,6 +6,9 @@ const URL_PATHS = {
   CATEGORIES: "/categories",
   PRODUCTS: "/products",
   UPLOAD_IMG: "/cloudinary/image",
+
+  // public
+  FEATURE_PRODUCT: "/public/products",
 };
 
 export default URL_PATHS;

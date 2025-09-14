@@ -68,3 +68,16 @@ export const deleteProduct = async (id: string) => {
     throw error;
   }
 };
+
+export const getFeatureProduct = async (params?: IApiParams) => {
+  try {
+    const res = await axiosInstance({
+      method: "GET",
+      url: `${URL_PATHS.FEATURE_PRODUCT}`,
+      params: params,
+    });
+    return res?.data;
+  } catch (error) {
+    throw error;
+  }
+};

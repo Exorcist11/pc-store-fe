@@ -4,38 +4,22 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Heart } from "lucide-react";
 import { Separator } from "@radix-ui/react-select";
-
-const products = [
-  {
-    name: "Laptop Gaming ASUS ROG Strix G15",
-    image:
-      "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
-    currentPrice: "32.990.000₫",
-    oldPrice: "38.990.000₫",
-    tag: "Giảm 15%",
-  },
-  {
-    name: "MacBook Pro 14 inch M2 Pro 2023",
-    image:
-      "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
-    currentPrice: "47.990.000₫",
-  },
-  {
-    name: "PC Gaming Intel Core i7 RTX 4070",
-    image:
-      "https://images.unsplash.com/photo-1593640408182-31c70c8268f5?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
-    currentPrice: "45.990.000₫",
-    tag: "Mới",
-  },
-  {
-    name: "Laptop Dell XPS 13 Plus 9320",
-    image:
-      "https://images.unsplash.com/photo-1531297484001-80022131f5a1?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
-    currentPrice: "39.990.000₫",
-  },
-];
+import { useEffect, useState } from "react";
+import { IProduct } from "@/interface/product.interface";
+import { getFeatureProduct } from "@/services/products";
+import { useRouter } from "next/navigation";
 
 export default function FeaturedProducts() {
+  const [products, setProducts] = useState<IProduct[]>([]);
+  const router = useRouter();
+  const getFeaturesProduct = async () => {
+    const response = await getFeatureProduct({ limit: 8 });
+    setProducts(response.data.items);
+  };
+
+  useEffect(() => {
+    getFeaturesProduct();
+  }, []);
   return (
     <section className="py-12 bg-surface-muted">
       <div className="container mx-auto">
@@ -48,30 +32,35 @@ export default function FeaturedProducts() {
           {products.map((product, idx) => (
             <Card
               key={idx}
-              className="overflow-visible transition-transform transform hover:-translate-y-2 hover:scale-105 shadow-sm hover:shadow-lg"
+              onClick={() => router.push(`/product/${product.slug}`)}
+              className="hover:cursor-pointer overflow-visible transition-transform transform hover:-translate-y-2 hover:scale-105 shadow-sm hover:shadow-lg"
             >
               <div className="relative">
-                {product.tag && (
-                  <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
-                    {product.tag}
+                {product.discount && (
+                  <span className="absolute top-2 left-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded">
+                    Giảm {product.discount}%
                   </span>
                 )}
                 <img
-                  src={product.image}
+                  src={product?.images[0]}
                   alt={product.name}
                   className="w-full h-48 object-cover rounded-t"
                 />
               </div>
 
-              <CardContent className="flex flex-col gap-2 p-4">
+              <CardContent className="flex flex-col gap-2 p-4 ">
                 <h3 className="text-sm font-semibold">{product.name}</h3>
                 <div className="flex items-center gap-2">
-                  <span className="text-lg font-bold text-primary">
-                    {product.currentPrice}
+                  <span className="text-lg font-bold text-brandeisBlue">
+                    {(
+                      product?.variants[0].price *
+                      (1 - (product?.discount ?? 0) / 100)
+                    ).toLocaleString("vi-VN")}
+                    đ
                   </span>
-                  {product.oldPrice && (
-                    <span className="text-sm text-muted line-through">
-                      {product.oldPrice}
+                  {product?.variants[0].price && (
+                    <span className="text-sm text-slate-500 line-through">
+                      {product?.variants[0].price.toLocaleString("vi-VN")}đ
                     </span>
                   )}
                 </div>

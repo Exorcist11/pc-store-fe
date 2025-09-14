@@ -1,54 +1,32 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "../ui/separator";
-
-const brands = [
-  {
-    name: "Samsung",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/2/24/Samsung_Logo.svg",
-  },
-  {
-    name: "Asus",
-    logo: "https://commons.wikimedia.org/wiki/File:ASUS_Logo.svg",
-  },
-  {
-    name: "Dell",
-    logo: "https://commons.wikimedia.org/wiki/File:Dell-Logo.svg",
-  },
-  {
-    name: "HP",
-    logo: "https://commons.wikimedia.org/wiki/File:HP-original-logo-1954-trademark.svg",
-  },
-  {
-    name: "Apple",
-    logo: "https://en.wikipedia.org/wiki/File:Apple_logo_black.svg",
-  },
-  {
-    name: "MSI",
-    logo: "https://commons.wikimedia.org/wiki/File:Msi-Logo.jpg",
-  },
-  {
-    name: "Logitech",
-    logo: "https://commons.wikimedia.org/wiki/File:Logitech_logo.svg",
-  },
-  {
-    name: "Razer",
-    logo: "https://worldvectorlogo.com/logo/razer",
-  },
-  {
-    name: "Corsair",
-    logo: "https://commons.wikimedia.org/wiki/File:Corsair_2020_logo.svg",
-  },
-  {
-    name: "Kingston",
-    logo: "https://worldvectorlogo.com/logo/kingston-technology",
-  },
-];
+import { getAllBrands } from "@/services/brand";
+import { IBrand } from "@/interface/brands.interface";
 
 export default function BrandCarousel() {
+  const [brands, setBrands] = useState<{ name: string; logo: string }[]>([]);
+  const getBrands = async () => {
+    try {
+      const response = await getAllBrands({ limit: 100 });
+      setBrands(
+        response.data.items.map((item: IBrand) => ({
+          name: item.name,
+          logo: item.logo,
+        }))
+      );
+    } catch (error) {
+      console.log("Error fetching brands: ", error);
+    }
+  };
+
+  useEffect(() => {
+    getBrands();
+  }, []);
+
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: true,
     align: "start",
@@ -83,14 +61,14 @@ export default function BrandCarousel() {
             {brands.concat(brands).map((brand, idx) => (
               <Card
                 key={idx}
-                className="flex-shrink-0 w-1/5 p-4 transition-transform transform
-                           hover:-translate-y-2 hover:scale-105 shadow-sm hover:shadow-lg cursor-pointer"
+                className="flex-shrink-0 w-1/5 transition-transform transform
+                   hover:-translate-y-2 hover:scale-105 shadow-sm hover:shadow-lg cursor-pointer"
               >
-                <CardContent className="flex items-center justify-center p-4">
+                <CardContent className="p-0">
                   <img
                     src={brand.logo}
                     alt={brand.name}
-                    className="h-16 object-contain grayscale hover:grayscale-0 transition-all"
+                    className="rounded-lg w-full h-full object-cover transition-all grayscale hover:grayscale-0"
                   />
                 </CardContent>
               </Card>

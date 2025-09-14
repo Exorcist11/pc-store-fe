@@ -101,8 +101,6 @@ export default function DialogCategory(props: IDialogProps) {
         isActive: payload.isActive,
       };
 
-      console.log(dataSend)
-
       if (!id) {
         await createNewCategory(dataSend);
         toastifyUtils("success", "Thêm mới danh mục thành công!");
@@ -229,7 +227,6 @@ export default function DialogCategory(props: IDialogProps) {
                                 title="Slug"
                                 type="text"
                                 disable={!id}
-                              
                               />
                             </FormControl>
                           </FormItem>

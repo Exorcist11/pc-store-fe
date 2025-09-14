@@ -12,7 +12,7 @@ export const loginFormSchema = z.object({
 
 export const brandSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  slug: z.string().min(1, "Slug is required"),
+  slug: z.string().optional(),
   logo: z.union([z.instanceof(File), z.string().url().nullable()]).optional(),
   description: z.string().optional(),
   isActive: z.boolean(),

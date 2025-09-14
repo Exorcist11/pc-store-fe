@@ -1,51 +1,19 @@
 export interface IProduct {
+  isActive: boolean;
   _id: string;
   name: string;
   slug: string;
-  sku?: string;
-  categoryId?: string;
-  brandId?: string;
-  productType?: ProductType;
-  description?: string;
-  shortDescription?: string;
-
-  specifications?: Record<string, string | number | boolean | null>;
-
-  images?: string[];
-  price: number;
-  comparePrice?: number | null;
-  costPrice?: number | null;
-
-  stock?: number;
-  minStock?: number;
-
-  weight?: number;
-
-  dimensions?: IDimensions;
-
-  compatibility?: ICompatibility;
-
-  isActive?: boolean;
-  isFeatured?: boolean;
-  tags?: string[];
-
-  seoTitle?: string;
-  seoDescription?: string;
-
-  createdAt?: string;
-  updatedAt?: string;
-  __v?: number;
-}
-
-export interface IDimensions {
-  length?: number;
-  width?: number;
-  height?: number;
-}
-
-export interface ICompatibility {
-  sockets: string[];
-  memoryTypes: string[];
+  description: string;
+  brand: string;
+  category: string;
+  productType: string;
+  allowedAttributes: string[];
+  variants: Variant[];
+  images: string[];
+  discount: number;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
 }
 
 export interface IProductResponse {
