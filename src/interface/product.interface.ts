@@ -16,6 +16,24 @@ export interface IProduct {
   __v: number;
 }
 
+export interface IProductPublic {
+  isActive: boolean;
+  _id: string;
+  name: string;
+  slug: string;
+  description: string;
+  brand: { id: string; name: string };
+  category: { id: string; name: string };
+  productType: string;
+  allowedAttributes: string[];
+  variants: Variant[];
+  images: string[];
+  discount: number;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+}
+
 export interface IProductResponse {
   total: number;
   index: number;
@@ -25,6 +43,7 @@ export interface IProductResponse {
 }
 
 export interface Variant {
+  _id?: string;
   sku: string;
   price: number;
   stock: number;

@@ -5,8 +5,10 @@ import { NavigationSheet } from "./navigation-sheet";
 import Link from "next/link";
 import { Input } from "../ui/input";
 import { Search, ShoppingCart, UserRound } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const NavbarCustom = () => {
+  const router = useRouter();
   return (
     <div className="bg-muted fixed top-0 z-10 inset-x-0 ">
       <div className="flex items-center py-4 justify-between mx-auto max-w-screen-xl">
@@ -25,7 +27,11 @@ const NavbarCustom = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          <Button variant="ghost" className="hidden sm:inline-flex">
+          <Button
+            variant="ghost"
+            className="hidden sm:inline-flex"
+            onClick={() => router.push("/login")}
+          >
             <UserRound />
             Đăng nhập
           </Button>

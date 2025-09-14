@@ -73,10 +73,22 @@ export const getFeatureProduct = async (params?: IApiParams) => {
   try {
     const res = await axiosInstance({
       method: "GET",
-      url: `${URL_PATHS.FEATURE_PRODUCT}`,
+      url: `${URL_PATHS.PUBLIC_PRODUCT}`,
       params: params,
     });
     return res?.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getProductBySlug = async (slug: string) => {
+  try {
+    const res = await axiosInstance({
+      method: "GET",
+      url: `${URL_PATHS.PUBLIC_PRODUCT_DETAIL}/${slug}`,
+    });
+    return res?.data.data;
   } catch (error) {
     throw error;
   }
