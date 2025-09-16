@@ -3,21 +3,43 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Laptop, Monitor, Cpu, Computer } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { getPublicCategory } from "@/services/categories";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
-interface Category {
-  name: string;
-  count: number;
-  icon: React.ReactNode;
-}
-
-const categories: Category[] = [
-  { name: "Laptop", count: 125, icon: <Laptop size={52} /> },
-  { name: "PC - Máy tính để bàn", count: 87, icon: <Computer size={52} /> },
-  { name: "Linh kiện máy tính", count: 256, icon: <Cpu size={52} /> },
-  { name: "Màn hình", count: 64, icon: <Monitor size={52} /> },
-];
+const iconMap: Record<string, React.ReactNode> = {
+  "Máy tính xách tay": <Laptop size={52} />,
+  Laptop: <Laptop size={52} />,
+  "Máy tính để bàn": <Computer size={52} />,
+  "PC - Máy tính để bàn": <Computer size={52} />,
+  "Linh kiện máy tính": <Cpu size={52} />,
+  "Màn hình": <Monitor size={52} />,
+};
 
 export default function CategorySection() {
+  const [categories, setCategories] = useState([]);
+  const router = useRouter();
+  const getCategory = async () => {
+    try {
+      const response = await getPublicCategory({ limit: 4 });
+      const data = response.data;
+
+      const categories = data.map((cat: any) => ({
+        ...cat,
+        icon: iconMap[cat.name] ?? <Cpu size={52} />,
+        count: cat.productCount,
+      }));
+
+      setCategories(categories);
+    } catch (error) {
+      console.error("Error fetching category: ", error);
+      return [];
+    }
+  };
+
+  useEffect(() => {
+    getCategory();
+  }, []);
   return (
     <section className="py-12 bg-surface-muted">
       <div className="container mx-auto ">
@@ -27,8 +49,9 @@ export default function CategorySection() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-          {categories.map((category) => (
+          {categories?.map((category: any) => (
             <Card
+              onClick={() => router.push(`/${category.slug}`)}
               key={category.name}
               className="flex flex-col items-center justify-center p-6 cursor-pointer
                          bg-white hover:bg-gray-50 shadow-sm hover:shadow-lg

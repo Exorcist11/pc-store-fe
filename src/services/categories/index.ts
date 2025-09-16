@@ -68,3 +68,32 @@ export const deleteCategory = async (id: string) => {
     throw error;
   }
 };
+
+export const getPublicCategory = async (params?: IApiParams) => {
+  try {
+    const res = await axiosInstance({
+      method: "GET",
+      url: `${URL_PATHS.PUBLIC_CATEGORY}`,
+      params: params,
+    });
+    return res?.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getPublicProductByCategorySlug = async (
+  slug: string,
+  params?: IApiParams
+) => {
+  try {
+    const res = await axiosInstance({
+      method: "GET",
+      url: `${URL_PATHS.PUBLIC_PRODUCT_BY_CATEGORY}/${slug}`,
+      params: params,
+    });
+    return res?.data.data;
+  } catch (error) {
+    throw error;
+  }
+};
