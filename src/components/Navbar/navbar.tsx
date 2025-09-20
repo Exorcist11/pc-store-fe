@@ -35,7 +35,11 @@ const NavbarCustom = () => {
             <UserRound />
             Đăng nhập
           </Button>
-          <Button variant="ghost" className="">
+          <Button
+            variant="ghost"
+            className=""
+            onClick={() => router.push("/cart")}
+          >
             <ShoppingCart />
             Giỏ hàng
           </Button>

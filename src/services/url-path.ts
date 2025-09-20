@@ -13,6 +13,9 @@ const URL_PATHS = {
   PUBLIC_PRODUCT_DETAIL: "/public/product",
   PUBLIC_CATEGORY: "/public/category",
   PUBLIC_PRODUCT_BY_CATEGORY: "/public/productByCategory",
+
+  // cart
+  CART: "/carts",
 };
 
 export default URL_PATHS;

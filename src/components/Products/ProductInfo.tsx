@@ -3,6 +3,8 @@ import { IProductPublic, Variant } from "@/interface/product.interface";
 import { shortenCPUName } from "@/utils/formatCpu";
 import { useState, useEffect } from "react";
 import ProductCommitment from "./ProductCommitment";
+import toastifyUtils from "@/utils/toastify";
+import { IAddToCart } from "@/interface/cart.interface";
 
 interface ProductInfoProps {
   product: IProductPublic;
@@ -40,7 +42,30 @@ export default function ProductInfo({
     const ram = variant.attributes.RAM || "";
     const storage = variant.attributes["Ổ cứng"] || "";
 
+    if (!cpu) return null;
     return `${shortenCPUName(cpu)} - ${ram} - ${storage.split(" ")[0]}`;
+  };
+
+  const handleAddToCart = async () => {
+    try {
+      if (product && selectedVariant) {
+        const dataSend: IAddToCart = {
+          user: "test",
+          items: [
+            {
+              product: product._id,
+              variantSku: selectedVariant.sku,
+              quantity: quantity,
+              priceAtAdd: selectedVariant.price,
+            },
+          ],
+        };
+        console.log(dataSend);
+      }
+    } catch (error) {
+      toastifyUtils("error", "Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng!");
+      console.error("Error add to cart!");
+    }
   };
 
   return (
@@ -117,9 +142,11 @@ export default function ProductInfo({
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium text-sm">
-                          {getVariantDisplayName(variant)}
-                        </span>
+                        {getVariantDisplayName(variant) && (
+                          <span className="font-medium text-sm">
+                            {getVariantDisplayName(variant)}
+                          </span>
+                        )}
                         <span className="text-xs bg-gray-100 px-2 py-1 rounded">
                           SKU: {variant.sku}
                         </span>
@@ -222,7 +249,7 @@ export default function ProductInfo({
                 -
               </button>
               <input
-                type="number"
+                type="text"
                 className="w-16 text-center border-l border-r py-2"
                 value={quantity}
                 onChange={(e) =>
@@ -230,6 +257,17 @@ export default function ProductInfo({
                 }
                 min="1"
                 max={selectedVariant.stock}
+                onKeyDown={(e) => {
+                  if (
+                    !/[0-9]/.test(e.key) &&
+                    e.key !== "Backspace" &&
+                    e.key !== "ArrowLeft" &&
+                    e.key !== "ArrowRight" &&
+                    e.key !== "Delete"
+                  ) {
+                    e.preventDefault();
+                  }
+                }}
               />
               <button
                 className="px-3 py-2 hover:bg-gray-100"
@@ -244,6 +282,7 @@ export default function ProductInfo({
             <button
               className="flex-1 bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
               disabled={selectedVariant.stock === 0}
+              onClick={() => handleAddToCart()}
             >
               🛒 Thêm vào giỏ
             </button>
@@ -271,7 +310,7 @@ export default function ProductInfo({
           {product.description}
         </p>
       </div>
-      
+
       <ProductCommitment />
     </div>
   );
