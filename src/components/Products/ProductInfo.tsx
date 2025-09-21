@@ -5,6 +5,8 @@ import { useState, useEffect } from "react";
 import ProductCommitment from "./ProductCommitment";
 import toastifyUtils from "@/utils/toastify";
 import { IAddToCart } from "@/interface/cart.interface";
+import { calculateDiscountedPrice } from "@/utils/formatPrice";
+import { addToCart } from "@/services/cart";
 
 interface ProductInfoProps {
   product: IProductPublic;
@@ -26,14 +28,11 @@ export default function ProductInfo({
   const [showAllVariants, setShowAllVariants] = useState(false);
 
   // Tính giá sau giảm giá
-  const calculateDiscountedPrice = (price: number) => {
-    if (product.discount) {
-      return price * (1 - product.discount / 100);
-    }
-    return price;
-  };
 
-  const discountedPrice = calculateDiscountedPrice(selectedVariant?.price ?? 0);
+  const discountedPrice = calculateDiscountedPrice(
+    selectedVariant?.price ?? 0,
+    product.discount
+  );
   const oldPrice = product.discount ? selectedVariant?.price : undefined;
 
   // Lấy tên ngắn của variant dựa trên thuộc tính chính
@@ -50,17 +49,13 @@ export default function ProductInfo({
     try {
       if (product && selectedVariant) {
         const dataSend: IAddToCart = {
-          user: "test",
-          items: [
-            {
-              product: product._id,
-              variantSku: selectedVariant.sku,
-              quantity: quantity,
-              priceAtAdd: selectedVariant.price,
-            },
-          ],
+          user: "68c96ebcf48cde9e2bd63958",
+          product: product._id,
+          variantSku: selectedVariant.sku,
+          quantity: quantity,
         };
-        console.log(dataSend);
+        await addToCart(dataSend);
+        toastifyUtils("success", "Thêm sản phẩm vào giỏ hàng thành công!");
       }
     } catch (error) {
       toastifyUtils("error", "Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng!");
@@ -120,7 +115,8 @@ export default function ProductInfo({
               : product.variants.slice(0, 3)
             ).map((variant) => {
               const variantDiscountedPrice = calculateDiscountedPrice(
-                variant.price
+                variant.price,
+                product.discount
               );
               const isSelected = selectedVariant?._id === variant._id;
               const isOutOfStock = variant.stock === 0;

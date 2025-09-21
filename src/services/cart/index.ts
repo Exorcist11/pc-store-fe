@@ -5,12 +5,25 @@ import URL_PATHS from "../url-path";
 export const addToCart = async (data: IAddToCart) => {
   try {
     const res = await axiosInstance({
-      method: "PATCH",
-      url: `${URL_PATHS.CART}`,
+      method: "POST",
+      url: `${URL_PATHS.CART}/add`,
       data: data,
     });
 
     return res.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getCartByUserId = async (userId: string) => {
+  try {
+    const res = await axiosInstance({
+      method: "GET",
+      url: `${URL_PATHS.CART}/user/${userId}`,
+    });
+
+    return res?.data?.data;
   } catch (error) {
     throw error;
   }

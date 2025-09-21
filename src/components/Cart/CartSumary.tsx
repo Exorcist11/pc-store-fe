@@ -67,6 +67,7 @@ export default function CartSummary({
         <Button
           className="w-full font-semibold hover:bg-brandeisBlue h-12"
           onClick={onCheckout}
+          disabled={!subtotal}
         >
           <Lock />
           Tiến hành thanh toán

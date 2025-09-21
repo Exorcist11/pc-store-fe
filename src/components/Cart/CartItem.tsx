@@ -4,8 +4,9 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Trash2, Minus, Plus, Trash } from "lucide-react";
-import { Control, Controller } from "react-hook-form";
+import { Control, Controller, useWatch } from "react-hook-form";
 import { Checkbox } from "@/components/ui/checkbox"; // shadcn checkbox
+import { calculateDiscountedPrice } from "@/utils/formatPrice";
 
 interface Spec {
   label: string;
@@ -23,6 +24,7 @@ interface CartItemProps {
   control: Control<any>;
   index: number;
   onRemove?: () => void;
+  stock: number;
 }
 
 export default function CartItem({
@@ -37,9 +39,14 @@ export default function CartItem({
   control,
   index,
   onRemove,
+  stock,
 }: CartItemProps) {
   const formatCurrency = (value: number) =>
     value.toLocaleString("vi-VN", { style: "currency", currency: "VND" });
+  const qty = useWatch({
+    control,
+    name: `items.${index}.qty`,
+  });
 
   return (
     <div
@@ -108,7 +115,9 @@ export default function CartItem({
                   size="icon"
                   variant="ghost"
                   type="button"
-                  onClick={() => field.onChange(field.value + 1)}
+                  onClick={() =>
+                    field.onChange(Math.min(stock, field.value + 1))
+                  }
                 >
                   <Plus className="w-4 h-4" />
                 </Button>
@@ -123,7 +132,7 @@ export default function CartItem({
       </CardContent>
 
       {/* Price */}
-      <div className="flex flex-col items-end justify-between gap-1">
+      <div className="flex flex-col items-end  gap-1">
         {discountPercent && (
           <div className="bg-red-500 text-white text-xs px-2 py-1 rounded-lg mb-1">
             -{discountPercent}%
@@ -133,9 +142,15 @@ export default function CartItem({
           {formatCurrency(originalPrice)}
         </div>
         <div className="font-bold text-lg text-brandeisBlue">
-          {formatCurrency(currentPrice)}
+          {formatCurrency(
+            calculateDiscountedPrice(originalPrice, discountPercent ?? 0)
+          )}
         </div>
-        <div className="text-sm ">{formatCurrency(currentPrice)}</div>
+        <div className="text-sm ">
+          {formatCurrency(
+            calculateDiscountedPrice(originalPrice, discountPercent ?? 0) * qty
+          )}
+        </div>
       </div>
     </div>
   );

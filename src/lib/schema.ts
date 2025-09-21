@@ -1,6 +1,4 @@
-import { ERROR_MESSAGE } from "@/constants/error-message";
-import { fileSchema } from "@/services/file/file";
-import { string, z } from "zod";
+import { z } from "zod";
 
 export const loginFormSchema = z.object({
   email: z.string().email("Email không hợp lệ").min(1, "Email là bắt buộc"),
@@ -53,3 +51,41 @@ export const productSchema = z.object({
 });
 
 export type ProductFormData = z.infer<typeof productSchema>;
+
+export const shippingAddressSchema = z.object({
+  stress: z.string().min(1, "Địa chỉ là bắt buộc"),
+  city: z.string().min(1, "Tỉnh là bắt buộc"),
+  state: z.string().min(1, "Phường/Xã là bắt buộc"),
+  country: z.string().optional(),
+  phone: z.string().optional(),
+  recipientName: z.string().optional()
+});
+
+export const guestInfoSchema = z.object({
+  email: z.string().min(1, "Email là bắt buộc"),
+  firstName: z.string().min(1, "Vui lòng nhập họ"),
+  lastName: z.string().min(1, "Vui lòng nhập tên"),
+  phone: z.string().min(1, "Số điện thoại là bắt buộc"),
+});
+
+export const itemProductSchema = z.object({
+  productId: z.string().min(1, "Mã sản phẩm là bắt buộc"),
+  variantSku: z.string().min(1, "Mã varient là bắt buộc"),
+  quantity: z.string().min(1, "Số lượng sản phẩm là bắt buộc"),
+  name: z.string().optional(),
+  image: z.string().optional(),
+  price: z.number().optional(),
+  discountPercent: z.number().optional(),
+});
+
+export const paymentSchema = z.object({
+  userId: z.string().optional(),
+  isGuest: z.boolean().optional(),
+  guestInfo: guestInfoSchema,
+  items: z.array(itemProductSchema).min(1, "Thanh toán tối thiểu 1 sản phẩm"),
+  shippingAddress: shippingAddressSchema,
+  paymentMethod: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+export type PaymentFormData = z.infer<typeof paymentSchema>;
