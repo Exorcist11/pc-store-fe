@@ -1,6 +1,16 @@
-import { useContext } from 'react';
-import AuthContext from '../contexts/JWTAuthContext';
+// hooks/useAuth.ts
+import { useAuthStore } from "@/store/authStore";
 
-const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const store = useAuthStore();
 
-export default useAuth;
+  return {
+    user: store.user,
+    token: store.token,
+    isAuthenticated: store.isAuthenticated,
+    isLoading: store.isLoading,
+    isInitialized: store.isInitialized,
+    signIn: store.signIn,
+    signOut: store.signOut,
+  };
+};

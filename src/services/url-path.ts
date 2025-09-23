@@ -1,8 +1,8 @@
 // const BASE_URL = import.meta.env.VITE_BASE_URL;
 const URL_PATHS = {
-  LOGIN: "",
-  REGISTER: "",
-  GET_CURRENT_USER: "",
+  LOGIN: "/auth/login",
+  REGISTER: "/auth/register",
+  GET_CURRENT_USER: "/auth/getCurrentUser",
   BRANDS: "/brands",
   CATEGORIES: "/categories",
   PRODUCTS: "/products",

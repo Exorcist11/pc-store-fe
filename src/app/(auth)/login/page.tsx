@@ -6,21 +6,22 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import axiosInstance from "@/services/api-services";
-import URL_PATHS from "@/services/url-path";
-import useAuth from "@/hooks/useAuth";
 import { loginFormSchema } from "@/lib/schema";
 import { Monitor, Cpu, Shield, Smartphone } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
+import { loginService } from "@/services/account";
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/store/authStore";
 
 interface TokenLogin {
   token: string;
 }
 
 export default function SignUp() {
-  const { signIn } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const { signIn } = useAuthStore();
 
   const form = useForm<z.infer<typeof loginFormSchema>>({
     resolver: zodResolver(loginFormSchema),
@@ -33,17 +34,21 @@ export default function SignUp() {
   const onSubmit = async (data: z.infer<typeof loginFormSchema>) => {
     setIsLoading(true);
     try {
-      const response = await axiosInstance({
-        method: "POST",
-        url: `${URL_PATHS.LOGIN}`,
-        data: data,
-      });
+      const response = await loginService(data);
+
       if (response) {
-        const tokenLogin = {
-          token: response?.data.token,
-          refreshToken: "",
-        };
-        signIn(tokenLogin);
+    
+        const success = await signIn({
+          token: response?.token,
+          refreshToken: response?.token || "",
+        });
+
+        if (success) {
+          router.push("/");
+        } else {
+          // Handle login error
+          console.error("Login failed");
+        }
       }
     } catch (error) {
       console.error("Error from login", error);

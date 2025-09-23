@@ -1,22 +1,38 @@
-import SlashScreen from '@/components/SplashScreen';
-import { GetCurrentUser } from '@/services/account';
-import { IUserInfo, useUserInfo } from '@/store/userInfoStore';
-import React from 'react';
+import SlashScreen from "@/components/SplashScreen";
+import { GetCurrentUser } from "@/services/account";
+import { useAuthStore } from "@/store/authStore";
+import { IUserInfo, useUserInfo } from "@/store/userInfoStore";
+import React from "react";
 
 interface InitialAuthStateProps {
   isAuthenticated: boolean;
   isInitialized: boolean;
 }
 
-const initialAuthState: InitialAuthStateProps = {
+interface UserInfo {
+  id?: string;
+  email?: string;
+  name?: string;
+}
+
+interface AuthContextType {
+  isAuthenticated: boolean;
+  isInitialized: boolean;
+  user: UserInfo | null;
+  signIn: (data: any) => Promise<void>;
+  signOut: () => void;
+}
+
+const initialAuthState: InitialAuthStateProps & { user: UserInfo | null } = {
   isAuthenticated: false,
-  isInitialized: false
+  isInitialized: false,
+  user: null,
 };
 
-const AuthContext = React.createContext({
+const AuthContext = React.createContext<AuthContextType>({
   ...initialAuthState,
-  signIn: async (data: any) => Promise.resolve(),
-  signOut: () => Promise
+  signIn: async () => Promise.resolve(),
+  signOut: () => {},
 });
 
 interface IAuthProviderProps {
@@ -24,9 +40,9 @@ interface IAuthProviderProps {
 }
 
 const ACTION_TYPE = {
-  INITIALIZE: 'INITIALIZE',
-  LOGIN: 'LOGIN',
-  LOGOUT: 'LOGOUT'
+  INITIALIZE: "INITIALIZE",
+  LOGIN: "LOGIN",
+  LOGOUT: "LOGOUT",
 };
 
 const reducer = (state: any, action: { type: string; payload?: any }) => {
@@ -37,7 +53,7 @@ const reducer = (state: any, action: { type: string; payload?: any }) => {
         ...state,
         isAuthenticated,
         isInitialized: true,
-        user
+        user,
       };
     }
     case ACTION_TYPE.LOGIN: {
@@ -45,14 +61,14 @@ const reducer = (state: any, action: { type: string; payload?: any }) => {
       return {
         ...state,
         isAuthenticated: true,
-        user
+        user,
       };
     }
     case ACTION_TYPE.LOGOUT: {
       return {
         ...state,
         isAuthenticated: false,
-        user: null
+        user: null,
       };
     }
     default: {
@@ -63,23 +79,24 @@ const reducer = (state: any, action: { type: string; payload?: any }) => {
 
 export const AuthProvider = ({ children }: IAuthProviderProps) => {
   const [state, dispatch] = React.useReducer(reducer, initialAuthState);
-  const { setUserInfo } = useUserInfo();
+  const { setUser } = useAuthStore();
 
   const signIn = async (data: any) => {
-    localStorage.setItem('token', data.token);
-    localStorage.setItem('refreshToken', data.refreshToken);
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("refreshToken", data.refreshToken);
     let userInfo = null;
     try {
       if (data.token) {
         const responseUserInfo: any = await GetCurrentUser();
-        
+        console.log(responseUserInfo);
+
         // const countNotification: any = await GetNotificationCount();
         // const listStore: any = await handleGetListStore();
         // const newNotificationNumber: number = await GetNewNotificationCount();
         if (responseUserInfo) {
           userInfo = responseUserInfo;
-          localStorage.setItem('userInfo', JSON.stringify(userInfo));
-          setUserInfo(responseUserInfo?.data);
+          localStorage.setItem("userInfo", JSON.stringify(userInfo));
+          setUser(responseUserInfo?.data);
           //     userInfo = responseUserInfo;
           //     if (userInfo) {
           //         localStorage.setItem('userInfo', JSON.stringify(userInfo));
@@ -111,8 +128,8 @@ export const AuthProvider = ({ children }: IAuthProviderProps) => {
       dispatch({
         type: ACTION_TYPE.LOGIN,
         payload: {
-          user: userInfo
-        }
+          user: userInfo,
+        },
       });
     }
     return true;
@@ -124,7 +141,7 @@ export const AuthProvider = ({ children }: IAuthProviderProps) => {
   };
 
   const initData = async () => {
-    let token = localStorage.getItem('token');
+    let token = localStorage.getItem("token");
     let userInfo: IUserInfo | null = null;
     try {
       if (token) {
@@ -134,8 +151,8 @@ export const AuthProvider = ({ children }: IAuthProviderProps) => {
         // const newNotificationNumber: number = await GetNewNotificationCount();
         if (responseUserInfo) {
           userInfo = responseUserInfo;
-          localStorage.setItem('userInfo', JSON.stringify(userInfo));
-          setUserInfo(responseUserInfo?.data);
+          localStorage.setItem("userInfo", JSON.stringify(userInfo));
+          setUser(responseUserInfo?.data);
           // const permissionResponse = await GetPermission();
           // setPermission(permissionResponse.permissions);
         }
@@ -154,8 +171,8 @@ export const AuthProvider = ({ children }: IAuthProviderProps) => {
           type: ACTION_TYPE.INITIALIZE,
           payload: {
             isAuthenticated: Boolean(token && userInfo),
-            user: userInfo
-          }
+            user: userInfo,
+          },
         });
       }, 200);
     }
@@ -177,7 +194,7 @@ export const AuthProvider = ({ children }: IAuthProviderProps) => {
         value={{
           ...state,
           signOut,
-          signIn
+          signIn,
         }}
       >
         {children}

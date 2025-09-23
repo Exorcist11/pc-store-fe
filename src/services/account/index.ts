@@ -1,10 +1,10 @@
-import axiosInstance from '../api-services';
-import URL_PATHS from '../url-path';
+import axiosInstance from "../api-services";
+import URL_PATHS from "../url-path";
 
 export const GetCurrentUser = async () => {
   try {
     const res = await axiosInstance.get(URL_PATHS.GET_CURRENT_USER);
-    return res;
+    return res.data?.data;
   } catch (error) {
     throw error;
   }
@@ -14,6 +14,19 @@ export const GetPermission = async () => {
   try {
     const res = await axiosInstance.get(URL_PATHS.GET_CURRENT_USER);
     return res;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const loginService = async (data: any) => {
+  try {
+    const res = await axiosInstance({
+      method: "POST",
+      url: `${URL_PATHS.LOGIN}`,
+      data: data,
+    });
+    return res.data?.data;
   } catch (error) {
     throw error;
   }

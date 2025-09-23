@@ -4,14 +4,15 @@ import BrandCarousel from "@/components/Homepage/BrandSlider";
 import CategorySection from "@/components/Homepage/CategorySection";
 import FeaturedProducts from "@/components/Homepage/FeaturedProduct";
 import PromoSection from "@/components/Homepage/PromoSection";
+import { useAuthStore } from "@/store/authStore";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 
 export default function Home() {
   const router = useRouter();
+  const { user } = useAuthStore();
+  console.log(user);
 
   return (
     <div className="overflow-scroll hide-scrollbar">
