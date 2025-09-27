@@ -24,11 +24,8 @@ export default function AuthProtectedRoute({
     return <div>Loading...</div>;
   }
 
-  // Nếu đang trong quá trình redirect thì không render gì
-  if (
-    (isAuthenticated && pathname === "/login") ||
-    (!isAuthenticated && pathname !== "/login")
-  ) {
+  // chỉ block khi đã login mà vẫn đứng ở trang login
+  if (isAuthenticated && pathname === "/login") {
     return null;
   }
 
