@@ -7,6 +7,7 @@ import toastifyUtils from "@/utils/toastify";
 import { IAddToCart } from "@/interface/cart.interface";
 import { calculateDiscountedPrice } from "@/utils/formatPrice";
 import { addToCart } from "@/services/cart";
+import { useAuthStore } from "@/store/authStore";
 
 interface ProductInfoProps {
   product: IProductPublic;
@@ -22,6 +23,7 @@ export default function ProductInfo({
   const rating = 5;
   const reviews = 28;
   // Tìm variant đầu tiên còn hàng
+  const { user } = useAuthStore();
 
   const [quantity, setQuantity] = useState(1);
   const [wishlist, setWishlist] = useState(false);
@@ -49,7 +51,7 @@ export default function ProductInfo({
     try {
       if (product && selectedVariant) {
         const dataSend: IAddToCart = {
-          user: "68c96ebcf48cde9e2bd63958",
+          user: user?._id ?? "",
           product: product._id,
           variantSku: selectedVariant.sku,
           quantity: quantity,

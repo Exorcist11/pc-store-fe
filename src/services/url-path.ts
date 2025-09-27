@@ -16,6 +16,9 @@ const URL_PATHS = {
 
   // cart
   CART: "/carts",
+
+  // order
+  ORDERS: "/orders",
 };
 
 export default URL_PATHS;

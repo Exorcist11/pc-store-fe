@@ -12,7 +12,6 @@ import { useRouter } from "next/navigation";
 export default function Home() {
   const router = useRouter();
   const { user } = useAuthStore();
-  console.log(user);
 
   return (
     <div className="overflow-scroll hide-scrollbar">

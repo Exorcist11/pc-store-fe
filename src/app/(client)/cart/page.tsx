@@ -11,6 +11,7 @@ import { calculateDiscountedPrice } from "@/utils/formatPrice";
 import LoadingWrapper from "@/components/Loading/LoadingWrapper";
 import { useCartStore } from "@/store/cartStore";
 import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/store/authStore";
 
 export type CartItemForm = {
   id: string;
@@ -39,6 +40,7 @@ export default function Cart() {
     defaultValues: {},
   });
   const router = useRouter();
+  const { user } = useAuthStore();
 
   const { setItems, items: cartItems, clearCart } = useCartStore();
 
@@ -73,44 +75,46 @@ export default function Cart() {
         discountPercent: item.discountPercent,
         qty: item.qty,
         name: item.name,
-        price: item.originalPrice
+        price: item.originalPrice,
       }))
     );
 
-    router.push("/payment")
+    router.push("/payment");
   };
 
   const getCart = async () => {
     setLoading(true);
     try {
-      const response = await getCartByUserId("68c96ebcf48cde9e2bd63958");
+      if (user) {
+        const response = await getCartByUserId(user._id ?? "");
 
-      const mappedItems = response.items.map((item: any) => {
-        const variant = item.product.variants.find(
-          (v: any) => v.sku === item.variantSku
-        );
+        const mappedItems = response.items.map((item: any) => {
+          const variant = item.product.variants.find(
+            (v: any) => v.sku === item.variantSku
+          );
 
-        return {
-          id: item._id,
-          qty: item.quantity,
-          selected: false,
-          productId: item.product._id,
-          variantSku: item.variantSku,
-          name: item.product.name,
-          imageUrl: variant?.images[0] || item.product.images[0],
-          specs: Object.entries(variant?.attributes || {}).map(
-            ([label, value]) => ({
-              label: `${label}: ${value}`,
-            })
-          ),
-          originalPrice: variant?.price,
-          currentPrice: item.priceAtAdd,
-          discountPercent: item.product.discount,
-          stock: variant.stock,
-        };
-      });
+          return {
+            id: item._id,
+            qty: item.quantity,
+            selected: false,
+            productId: item.product._id,
+            variantSku: item.variantSku,
+            name: item.product.name,
+            imageUrl: variant?.images[0] || item.product.images[0],
+            specs: Object.entries(variant?.attributes || {}).map(
+              ([label, value]) => ({
+                label: `${label}: ${value}`,
+              })
+            ),
+            originalPrice: variant?.price,
+            currentPrice: item.priceAtAdd,
+            discountPercent: item.product.discount,
+            stock: variant.stock,
+          };
+        });
 
-      reset({ items: mappedItems });
+        reset({ items: mappedItems });
+      }
     } catch (error) {
       console.error("Error fetching cart: ", error);
     } finally {
@@ -120,7 +124,7 @@ export default function Cart() {
 
   useEffect(() => {
     getCart();
-  }, []);
+  }, [user?._id]);
 
   return (
     <LoadingWrapper isLoading={loading}>

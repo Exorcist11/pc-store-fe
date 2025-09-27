@@ -4,9 +4,10 @@ import { persist } from "zustand/middleware";
 import { GetCurrentUser } from "@/services/account";
 
 interface User {
-  id?: string;
+  _id?: string;
   email?: string;
-  name?: string;
+  role?: string;
+  fullName?: string;
 }
 
 interface AuthState {
@@ -29,7 +30,7 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       token: null,
-      user: null, // Không persist user
+      user: null,
       isLoading: false,
       isInitialized: false,
       isAuthenticated: false,
@@ -42,12 +43,10 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
 
         try {
-          // Lưu token vào localStorage và store
           localStorage.setItem("token", data.token);
           localStorage.setItem("refreshToken", data.refreshToken);
           set({ token: data.token });
 
-          // Gọi API get current user
           const responseUserInfo = await GetCurrentUser();
 
           if (responseUserInfo) {
@@ -82,7 +81,6 @@ export const useAuthStore = create<AuthState>()(
         });
       },
 
-      // store/authStore.ts
       initializeAuth: async () => {
         const currentState = get();
 
@@ -90,7 +88,6 @@ export const useAuthStore = create<AuthState>()(
 
         set({ isLoading: true });
 
-        // Debug localStorage
         const token = localStorage.getItem("token");
 
         if (token) {
@@ -111,7 +108,6 @@ export const useAuthStore = create<AuthState>()(
               console.log("⚠️ API returned but no data field");
             }
           } catch (error) {
-            
             localStorage.clear();
           }
         } else {
@@ -129,7 +125,6 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "auth-storage",
-      // CHỈ persist token, không persist user
       partialize: (state) => ({
         token: state.token,
       }),

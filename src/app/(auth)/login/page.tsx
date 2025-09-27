@@ -10,7 +10,7 @@ import { loginFormSchema } from "@/lib/schema";
 import { Monitor, Cpu, Shield, Smartphone } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
-import { loginService } from "@/services/account";
+import { GetCurrentUser, loginService } from "@/services/account";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
 
@@ -21,7 +21,7 @@ interface TokenLogin {
 export default function SignUp() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { signIn } = useAuthStore();
+  const { signIn, setUser } = useAuthStore();
 
   const form = useForm<z.infer<typeof loginFormSchema>>({
     resolver: zodResolver(loginFormSchema),
@@ -37,18 +37,31 @@ export default function SignUp() {
       const response = await loginService(data);
 
       if (response) {
-    
-        const success = await signIn({
+        const tokenLogin = {
           token: response?.token,
-          refreshToken: response?.token || "",
-        });
+          refreshToken: "",
+        };
 
-        if (success) {
-          router.push("/");
-        } else {
-          // Handle login error
-          console.error("Login failed");
-        }
+        localStorage.setItem("token", response?.token);
+
+        const user = await GetCurrentUser();
+        setUser(user);
+
+        const redirectPath = user?.role === "admin" ? "/admin/categories" : "/";
+
+        router.push(redirectPath);
+        signIn(tokenLogin);
+        // const success = await signIn({
+        //   token: response?.token,
+        //   refreshToken: response?.token || "",
+        // });
+
+        // if (success) {
+        //   router.push("/");
+        // } else {
+        //   // Handle login error
+        //   console.error("Login failed");
+        // }
       }
     } catch (error) {
       console.error("Error from login", error);
@@ -62,7 +75,10 @@ export default function SignUp() {
       {/* Left Panel - Brand & Features */}
       <div className="hidden lg:flex flex-col w-1/2 bg-gradient-to-br from-blue-900 to-purple-800 text-white p-12">
         <div className="flex items-center mb-10">
-          <div className="flex items-center">
+          <div
+            className="flex items-center hover:cursor-pointer"
+            onClick={() => router.push("/")}
+          >
             <Cpu className="h-8 w-8 mr-2" />
             <span className="text-2xl font-bold">PC STORE</span>
           </div>
