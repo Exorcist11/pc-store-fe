@@ -14,11 +14,7 @@ export default function AuthProtectedRoute({
 
   useEffect(() => {
     if (isInitialized && !isLoading) {
-      if (!isAuthenticated && pathname !== "/login") {
-        // chưa login mà đi đâu khác login → đưa về login
-        router.push("/login");
-      } else if (isAuthenticated && pathname === "/login") {
-        // đã login mà vẫn ở login → đưa về /
+      if (isAuthenticated && pathname === "/login") {
         router.push("/");
       }
     }
