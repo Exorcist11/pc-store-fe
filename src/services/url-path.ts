@@ -19,6 +19,9 @@ const URL_PATHS = {
 
   // order
   ORDERS: "/orders",
+
+  // users
+  USERS: "/users",
 };
 
 export default URL_PATHS;

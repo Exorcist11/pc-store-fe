@@ -1,28 +1,21 @@
 "use client";
+
 import InputWithIcon from "@/components/CustomInput/InputWithIcon";
 import CustomTable from "@/components/CustomTable";
-import DialogBrand from "@/components/Dialog/DialogBrand";
 import { Button } from "@/components/ui/button";
-import { ACTION } from "@/constants/action";
 import useLoadingStore from "@/hooks/useLoading";
-import { IBrandResponse } from "@/interface/brands.interface";
 import { IApiParams } from "@/interface/shared/api";
-import { getAllBrands } from "@/services/brand";
+import { IUserResponse } from "@/interface/user.interface";
+import { getAllUsers } from "@/services/users";
 import { debounce } from "lodash";
-import { Plus, Search, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Plus, Search } from "lucide-react";
 import React from "react";
 
 export default function page() {
-  const [open, setOpen] = React.useState<boolean>(false);
-  const [type, setType] = React.useState<string>(ACTION.ADD);
-  const [brandId, setBrandId] = React.useState<string>("");
-
-  const [brands, setBrands] = React.useState<IBrandResponse>();
   const [search, setSearch] = React.useState<string>("");
-  const [pageSize, setPageSize] = React.useState<number>(10);
   const { stopLoading, loading, startLoading } = useLoadingStore();
-  const router = useRouter();
+  const [users, setUsers] = React.useState<IUserResponse>();
+  const [pageSize, setPageSize] = React.useState<number>(10);
 
   const columns: any[] = React.useMemo(
     () => [
@@ -30,8 +23,8 @@ export default function page() {
         header: "No.",
         id: "no",
         cell: ({ row }: any) => {
-          const pageIndex = brands?.index || 1;
-          const pageSize = brands?.limit || 10;
+          const pageIndex = users?.index || 1;
+          const pageSize = users?.limit || 10;
           return (pageIndex - 1) * pageSize + row.index + 1;
         },
         meta: {
@@ -39,40 +32,58 @@ export default function page() {
         },
       },
       {
-        header: "Tên thương hiệu",
-        id: "name",
-        accessorKey: "name",
+        header: "Email",
+        id: "email",
+        accessorKey: "email",
         cell: ({ row }: any) => {
-          return row?.original?.name;
+          return row?.original?.email;
         },
         meta: {
           cellClassName: "py-5 w-[37.5%] ",
         },
       },
       {
-        header: "Slug",
-        id: "slug",
-        accessorKey: "slug",
+        header: "Fullname",
+        id: "fullName",
+        accessorKey: "fullName",
         cell: ({ row }: any) => {
-          return row?.original?.slug;
+          return row?.original?.fullName;
         },
         meta: {
-          cellClassName: "py-5 w-[37.5%] ",
+          cellClassName: "py-5 w-[30.5%] ",
         },
       },
       {
-        header: "Trạng thái",
-        id: "isActive",
-        accessorKey: "isActive",
+        header: "Số điện thoại",
+        id: "phone",
+        accessorKey: "phone",
+        meta: {
+          cellClassName: "py-5 w-[15%] text-left",
+        },
+      },
+      {
+        header: "Role",
+        id: "role",
+        accessorKey: "role",
         cell: ({ row }: any) => {
-          const isActive = row?.original?.isActive;
+          const role = row?.original?.role;
+
+          const roleConfig: Record<string, { label: string; color: string }> = {
+            admin: { label: "Admin", color: "bg-red-500" },
+            staff: { label: "Staff", color: "bg-blue-500" },
+            customer: { label: "Customer", color: "bg-green-500" },
+          };
+
+          const { label, color } = roleConfig[role] || {
+            label: "Unknown",
+            color: "bg-gray-400",
+          };
+
           return (
             <span
-              className={`px-3 py-1 rounded-full text-white text-sm font-medium ${
-                isActive ? "bg-green-500" : "bg-red-500"
-              }`}
+              className={`px-3 py-1 rounded-full text-white text-sm font-medium ${color}`}
             >
-              {isActive ? "Active" : "InActive"}
+              {label}
             </span>
           );
         },
@@ -80,6 +91,7 @@ export default function page() {
           cellClassName: "py-5 w-[15%] text-center",
         },
       },
+
       // {
       //   header: "",
       //   id: "_action",
@@ -93,10 +105,10 @@ export default function page() {
       //   },
       // },
     ],
-    [JSON.stringify(brands)]
+    [JSON.stringify(users)]
   );
 
-  const getBrand = async (pageIndex: number) => {
+  const getUsers = async (pageIndex: number) => {
     startLoading();
     const params: IApiParams = {
       limit: pageSize,
@@ -106,29 +118,24 @@ export default function page() {
       keyword: search,
     };
     try {
-      const response = await getAllBrands(params);
+      const response = await getAllUsers(params);
 
-      setBrands(response?.data);
+      setUsers(response?.data);
     } catch (error) {
-      console.error("Error fetching brands: ", error);
+      console.error("Error fetching users: ", error);
     } finally {
       stopLoading();
     }
   };
 
-  const handleRowClick = (row: any) => {
-    setOpen(true);
-    setBrandId(row._id);
-  };
-
   React.useEffect(() => {
-    getBrand(1);
+    getUsers(1);
   }, [pageSize, search]);
 
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between gap-5">
-        <h3 className="font-bold text-xl uppercase">Danh sách thương hiệu</h3>
+        <h3 className="font-bold text-xl uppercase">Danh sách tài khoản</h3>
 
         <div className="flex items-center justify-end gap-5">
           <InputWithIcon
@@ -139,41 +146,26 @@ export default function page() {
               setSearch(e.target.value);
             }, 1000)}
           />
-          <Button
-            onClick={() => {
-              setOpen(true);
-              setBrandId("");
-            }}
-          >
+          <Button onClick={() => {}}>
             <Plus color="#fff" /> Thêm mới
           </Button>
         </div>
       </div>
+
       <div className="flex gap-2 flex-col">
         <CustomTable
           columns={columns}
-          data={brands?.items || []}
+          data={users?.items || []}
           isLoading={loading}
           wrapperClassName="2xl:max-h-[78vh]  xl:max-h-[72vh]"
-          pageIndex={brands?.index || 1}
-          pageSize={brands?.limit || pageSize}
-          totalCount={brands?.total || 0}
-          onChangePage={(pageIndex) => getBrand(pageIndex)}
+          pageIndex={users?.index || 1}
+          pageSize={users?.limit || pageSize}
+          totalCount={users?.total || 0}
+          onChangePage={(pageIndex) => getUsers(pageIndex)}
           onChangePageSize={(pageSize) => setPageSize(pageSize)}
-          onRowClick={(row) => handleRowClick(row)}
+          //   onRowClick={(row) => handleRowClick(row)}
         />
       </div>
-
-      {open && type && (
-        <DialogBrand
-          open={open}
-          setOpen={setOpen}
-          type={type}
-          id={brandId}
-          reload={getBrand}
-          setType={setType}
-        />
-      )}
     </div>
   );
 }

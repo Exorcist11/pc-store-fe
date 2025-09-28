@@ -133,7 +133,7 @@ export default function page() {
         <div className="flex items-center justify-end gap-5">
           <InputWithIcon
             Icon={Search}
-            placeholder="Tìm kiếm theo tên"
+            placeholder="Tìm kiếm"
             className="w-[35%]"
             onChange={debounce((e: React.ChangeEvent<HTMLInputElement>) => {
               setSearch(e.target.value);

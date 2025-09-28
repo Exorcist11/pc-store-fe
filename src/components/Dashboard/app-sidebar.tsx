@@ -92,31 +92,27 @@ const data = {
     },
     {
       title: "Quản lý đơn hàng",
-      url: "/trips",
+      url: "/admin/orders",
       icon: FileText,
       items: [
         {
-          title: "Tuyến đường",
-          url: "/trips/route",
+          title: "Đơn hàng gần đây",
+          url: "/admin/orders",
         },
         {
-          title: "Lịch trình",
+          title: "Đơn hàng ",
           url: "/trips/schedule",
-        },
-        {
-          title: "Chuyến đi",
-          url: "/trips",
         },
       ],
     },
     {
       title: "Quản lý người dùng",
-      url: "/users",
+      url: "/admin/users",
       icon: Users,
       items: [
         {
           title: "Danh sách người dùng",
-          url: "/users",
+          url: "/admin/users",
         },
         {
           title: "Team",
