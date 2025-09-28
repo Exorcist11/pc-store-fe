@@ -18,6 +18,7 @@ import {
   Truck,
   XCircle,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import React, { JSX } from "react";
 
 export default function page() {
@@ -25,6 +26,10 @@ export default function page() {
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [order, setOrder] = React.useState<IOrderResponse>();
   const { stopLoading, loading, startLoading } = useLoadingStore();
+  const router = useRouter();
+  const handleRowClick = (row: any) => {
+    router.push(`/admin/orders/${row._id}`);
+  };
 
   const columns: any[] = React.useMemo(
     () => [
@@ -245,7 +250,7 @@ export default function page() {
           totalCount={order?.total || 0}
           onChangePage={(pageIndex) => getOrder(pageIndex)}
           onChangePageSize={(pageSize) => setPageSize(pageSize)}
-          //   onRowClick={(row) => handleRowClick(row)}
+          onRowClick={(row) => handleRowClick(row)}
         />
       </div>
     </div>

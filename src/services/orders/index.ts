@@ -14,3 +14,15 @@ export const getAllOrders = async (params?: IApiParams) => {
     throw error;
   }
 };
+
+export const getOrderById = async (id: string) => {
+  try {
+    const res = await axiosInstance({
+      method: "GET",
+      url: `${URL_PATHS.ORDERS}/${id}`,
+    });
+    return res?.data?.data;
+  } catch (error) {
+    throw error;
+  }
+};
