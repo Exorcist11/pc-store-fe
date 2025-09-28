@@ -12,6 +12,7 @@ import {
   Check,
   X,
   ArrowLeft,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,10 +33,13 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { getOrderById } from "@/services/orders";
 import { Order } from "@/interface/order.interface";
 import LoadingWrapper from "@/components/Loading/LoadingWrapper";
+import toastifyUtils from "@/utils/toastify";
+import axiosInstance from "@/services/api-services";
+import URL_PATHS from "@/services/url-path";
 
 const AdminOrderDetail = () => {
   const [orderStatus, setOrderStatus] = useState("pending");
@@ -43,17 +47,20 @@ const AdminOrderDetail = () => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [orderData, setOrderDetail] = useState<Order>();
   const params = useParams();
+  const router = useRouter();
   const [city, setCity] = useState<any>();
   const [state, setState] = useState<any>();
-  console.log("CHECK: ", city?.name, state?.name);
 
   const getOrder = async () => {
     try {
       const order = await getOrderById(String(params?.id));
-      console.log("ORDER", order);
       setOrderDetail(order);
+      // Set initial status values from fetched order
+      setOrderStatus(order.status || "pending");
+      setPaymentStatus(order.paymentStatus || "unpaid");
     } catch (error) {
-      console.error("Error fetching product detail: ", error);
+      console.error("Error fetching order detail: ", error);
+      toastifyUtils("error", "Không thể tải thông tin đơn hàng");
     }
   };
 
@@ -78,8 +85,6 @@ const AdminOrderDetail = () => {
     switch (status) {
       case "pending":
         return "secondary";
-      case "confirmed":
-        return "default";
       case "processing":
         return "secondary";
       case "shipped":
@@ -99,7 +104,7 @@ const AdminOrderDetail = () => {
         return "default";
       case "unpaid":
         return "destructive";
-      case "refunded":
+      case "failed":
         return "secondary";
       default:
         return "secondary";
@@ -108,7 +113,6 @@ const AdminOrderDetail = () => {
 
   const statusTranslations: any = {
     pending: "Chờ xử lý",
-    confirmed: "Đã xác nhận",
     processing: "Đang xử lý",
     shipped: "Đã giao vận",
     delivered: "Đã giao",
@@ -118,25 +122,96 @@ const AdminOrderDetail = () => {
   const paymentStatusTranslations: any = {
     unpaid: "Chưa thanh toán",
     paid: "Đã thanh toán",
-    refunded: "Đã hoàn tiền",
+    failed: "Thất bại",
   };
 
-  const handleStatusUpdate = async (newStatus: string) => {
-    setIsUpdating(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setOrderStatus(newStatus);
-    setIsUpdating(false);
-    console.log("Updating order status to:", newStatus);
+  const updateOrderStatus = async (statusData: any) => {
+    try {
+      setIsUpdating(true);
+
+      const response = await axiosInstance({
+        method: "PATCH",
+        url: `${URL_PATHS.ORDERS}/${orderData?._id}/status`,
+        data: statusData, // Send the status data in the request body
+      });
+
+      if (response.data.success) {
+        // Update local state on success
+        if (statusData?.status) {
+          setOrderStatus(statusData.status);
+          // Also update the order data
+          setOrderDetail((prev) =>
+            prev ? { ...prev, status: statusData.status } : prev
+          );
+        }
+        if (statusData.paymentStatus) {
+          setPaymentStatus(statusData.paymentStatus);
+          // Also update the order data
+          setOrderDetail((prev) =>
+            prev ? { ...prev, paymentStatus: statusData.paymentStatus } : prev
+          );
+        }
+
+        // Show success toast
+        toastifyUtils("success", "Cập nhật trạng thái thành công");
+      } else {
+        throw new Error("API response indicates failure");
+      }
+    } catch (error) {
+      console.error("Error updating order status:", error);
+      toastifyUtils("error", "Có lỗi xảy ra khi cập nhật trạng thái");
+
+      // Revert to previous state on error
+      if (orderData) {
+        setOrderStatus(orderData.status || "pending");
+        setPaymentStatus(orderData.paymentStatus || "unpaid");
+      }
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
-  const handlePaymentStatusUpdate = async (newStatus: string) => {
-    setIsUpdating(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setPaymentStatus(newStatus);
-    setIsUpdating(false);
-    console.log("Updating payment status to:", newStatus);
+  const handleStatusUpdate = async (newStatus: any) => {
+    await updateOrderStatus({
+      status: newStatus,
+      paymentStatus: paymentStatus, // Keep current payment status
+    });
+  };
+
+  const handlePaymentStatusUpdate = async (newStatus: any) => {
+    await updateOrderStatus({
+      status: orderStatus, // Keep current order status
+      paymentStatus: newStatus,
+    });
+  };
+
+  // Function to update both statuses at once
+  const handleBulkStatusUpdate = async () => {
+    await updateOrderStatus({
+      status: orderStatus,
+      paymentStatus: paymentStatus,
+    });
+  };
+
+  const handleGoBack = () => {
+    router.back();
+  };
+
+  const getLocationInfo = async (cityId: string, stateId: string) => {
+    try {
+      const [cityResponse, stateResponse] = await Promise.all([
+        fetch(`https://provinces.open-api.vn/api/v2/p/${cityId}`),
+        fetch(`https://provinces.open-api.vn/api/v2/w/${stateId}`),
+      ]);
+
+      const cityData = await cityResponse.json();
+      const stateData = await stateResponse.json();
+
+      setCity(cityData);
+      setState(stateData);
+    } catch (error) {
+      console.error("Error fetching location info:", error);
+    }
   };
 
   useEffect(() => {
@@ -146,32 +221,29 @@ const AdminOrderDetail = () => {
   }, [params?.id]);
 
   useEffect(() => {
-    if (orderData) {
-      fetch(
-        `https://provinces.open-api.vn/api/v2/w/${orderData?.shippingAddress.state}`
-      )
-        .then((res) => res.json())
-        .then((data) => setState(data));
-      fetch(
-        `https://provinces.open-api.vn/api/v2/p/${orderData?.shippingAddress.city}`
-      )
-        .then((res) => res.json())
-        .then((data) => setCity(data));
+    if (orderData?.shippingAddress) {
+      const { city: cityId, state: stateId } = orderData.shippingAddress;
+      if (cityId && stateId) {
+        getLocationInfo(cityId, stateId);
+      }
     }
-  }, [orderData]);
+  }, [orderData?.shippingAddress]);
 
   if (!orderData) {
-    // You can replace this with a more sophisticated loading spinner component
     return <LoadingWrapper isLoading={true}></LoadingWrapper>;
   }
 
   return (
     <LoadingWrapper isLoading={!orderData}>
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto space-y-6">
+        <div className="container mx-auto py-6 space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
+              <Button variant="ghost" size="sm" onClick={handleGoBack}>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Quay lại
+              </Button>
               <div>
                 <h1 className="text-3xl font-bold tracking-tight">
                   Đơn hàng #{(orderData?._id ?? "").slice(-8)}
@@ -229,7 +301,6 @@ const AdminOrderDetail = () => {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="pending">Chờ xử lý</SelectItem>
-                          <SelectItem value="confirmed">Đã xác nhận</SelectItem>
                           <SelectItem value="processing">Đang xử lý</SelectItem>
                           <SelectItem value="shipped">Đã giao vận</SelectItem>
                           <SelectItem value="delivered">Đã giao</SelectItem>
@@ -255,7 +326,7 @@ const AdminOrderDetail = () => {
                             Chưa thanh toán
                           </SelectItem>
                           <SelectItem value="paid">Đã thanh toán</SelectItem>
-                          <SelectItem value="refunded">Đã hoàn tiền</SelectItem>
+                          <SelectItem value="failed">Thất bại</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -268,6 +339,24 @@ const AdminOrderDetail = () => {
                     <Badge variant={getPaymentStatusVariant(paymentStatus)}>
                       {paymentStatusTranslations[paymentStatus]}
                     </Badge>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleBulkStatusUpdate}
+                      disabled={isUpdating}
+                    >
+                      {isUpdating ? (
+                        <>
+                          <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                          Đang cập nhật...
+                        </>
+                      ) : (
+                        <>
+                          <Check className="w-3 h-3 mr-1" />
+                          Lưu thay đổi
+                        </>
+                      )}
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -282,7 +371,7 @@ const AdminOrderDetail = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {orderData?.items.map((item, index) => (
+                    {orderData?.items?.map((item, index) => (
                       <div
                         key={index}
                         className="flex space-x-4 p-4 border rounded-lg"
@@ -290,7 +379,7 @@ const AdminOrderDetail = () => {
                         <Avatar className="w-16 h-16 rounded-md">
                           <AvatarImage
                             src={item.product?.images?.[0]}
-                            alt={item.product.name}
+                            alt={item.product?.name}
                             className="object-cover"
                           />
                           <AvatarFallback className="rounded-md">
@@ -300,7 +389,7 @@ const AdminOrderDetail = () => {
 
                         <div className="flex-1 space-y-1">
                           <h3 className="font-medium leading-none">
-                            {item.product.name}
+                            {item.product?.name}
                           </h3>
                           <p className="text-sm text-muted-foreground">
                             SKU: {item.variantSku}
@@ -317,14 +406,14 @@ const AdminOrderDetail = () => {
                           <div className="text-sm text-muted-foreground">
                             Số lượng: {item.quantity}
                           </div>
-                          {item.product?.discount > 0 && (
+                          {(item.product?.discount || 0) > 0 && (
                             <Badge variant="destructive" className="text-xs">
                               -{item.product.discount}%
                             </Badge>
                           )}
                         </div>
                       </div>
-                    ))}
+                    )) ?? []}
                   </div>
                 </CardContent>
               </Card>
@@ -408,7 +497,8 @@ const AdminOrderDetail = () => {
                     {orderData.shippingAddress?.street}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {city?.name}, {state?.name}
+                    {city?.name ?? orderData.shippingAddress?.city},{" "}
+                    {state?.name ?? orderData.shippingAddress?.state}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     {orderData.shippingAddress?.country}
@@ -432,7 +522,7 @@ const AdminOrderDetail = () => {
                     <p className="text-sm text-muted-foreground">
                       {orderData?.paymentMethod === "cod"
                         ? "Thanh toán khi nhận hàng (COD)"
-                        : orderData.paymentMethod}
+                        : orderData?.paymentMethod}
                     </p>
                   </div>
 
