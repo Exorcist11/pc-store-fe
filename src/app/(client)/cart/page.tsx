@@ -12,6 +12,8 @@ import LoadingWrapper from "@/components/Loading/LoadingWrapper";
 import { useCartStore } from "@/store/cartStore";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
+import { Inbox } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export type CartItemForm = {
   id: string;
@@ -137,7 +139,7 @@ export default function Cart() {
 
           <div className="grid grid-cols-9 gap-6">
             <div className="col-span-6">
-              {fields.length > 0 && (
+              {fields.length > 0 ? (
                 <Card>
                   <CardHeader>
                     <p className="text-xl font-semibold">
@@ -169,6 +171,12 @@ export default function Cart() {
                     </CardContent>
                   ))}
                 </Card>
+              ) : (
+                <div className="flex items-center justify-center flex-col gap-3 h-full">
+                  <Inbox size={120} />
+                  <h3 className="font-semibold text-xl">Giỏ hàng trống!</h3>
+                  <Button>Tiếp tục mua sắm</Button>
+                </div>
               )}
             </div>
 

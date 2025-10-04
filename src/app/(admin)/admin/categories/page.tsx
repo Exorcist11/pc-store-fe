@@ -11,7 +11,7 @@ import { getAllCategories } from "@/services/categories";
 import { debounce } from "lodash";
 import { Plus, Search, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React from "react";
+import React, { useState } from "react";
 
 export default function page() {
   const [open, setOpen] = React.useState<boolean>(false);

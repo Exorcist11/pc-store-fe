@@ -14,7 +14,7 @@ export const NavMenu = (props: NavigationMenuProps) => {
   const pathname = usePathname();
   const menus = [
     { path: "/", label: "Trang chủ" },
-    { path: "/laptop", label: "Laptop" },
+    { path: "/may-tinh-xach-tay", label: "Laptop" },
     { path: "/pc", label: "PC - Máy tính để bàn" },
     { path: "/linh-kien", label: "Linh kiện" },
     { path: "/man-hinh", label: "Màn hình" },
