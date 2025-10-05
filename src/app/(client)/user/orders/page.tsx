@@ -94,7 +94,7 @@ export default function OrdersPage() {
       )}
 
       {orders.map((order) => (
-        <div key={order._id} className="border shadow-sm rounded-xl">
+        <div key={order._id} className="border shadow-sm rounded-xl bg-white">
           <CardHeader className="flex flex-col sm:flex-row sm:justify-between sm:items-center pb-2">
             <div className="text-sm text-muted-foreground space-x-2">
               <span className="font-medium text-foreground">

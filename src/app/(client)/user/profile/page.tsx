@@ -95,6 +95,7 @@ export default function ProfilePage() {
                     type="email"
                     placeholder="example@email.com"
                     disabled={true}
+                    className="bg-white"
                     {...field}
                   />
                 </FormControl>
@@ -114,6 +115,7 @@ export default function ProfilePage() {
                   <Input
                     placeholder="Nhập họ và tên"
                     disabled={!isEditing}
+                    className="bg-white"
                     {...field}
                   />
                 </FormControl>
@@ -133,6 +135,7 @@ export default function ProfilePage() {
                   <Input
                     placeholder="VD: 0901234567"
                     disabled={!isEditing}
+                    className="bg-white"
                     {...field}
                   />
                 </FormControl>
@@ -153,6 +156,7 @@ export default function ProfilePage() {
                     type="password"
                     placeholder="••••••••"
                     disabled={!isEditing}
+                    className="bg-white"
                     {...field}
                   />
                 </FormControl>

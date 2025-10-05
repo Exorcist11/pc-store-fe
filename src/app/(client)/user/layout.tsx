@@ -97,7 +97,7 @@ export default function UserLayout({
       </aside>
 
       {/* --- Main content --- */}
-      <main className="flex-1 bg-background rounded-2xl border p-6 shadow-sm">
+      <main className="flex-1 bg-gradient-to-br from-slate-50 to-slate-100  rounded-2xl border p-6 shadow-sm">
         {children}
       </main>
     </div>
