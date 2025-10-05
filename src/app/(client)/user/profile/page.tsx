@@ -14,19 +14,19 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+
 import { useAuthStore } from "@/store/authStore";
 import { useState } from "react";
+import axiosInstance from "@/services/api-services";
+import URL_PATHS from "@/services/url-path";
+import toastifyUtils from "@/utils/toastify";
 
 const formSchema = z.object({
-  email: z.string().email("Email không hợp lệ"),
-  password: z.string().min(6, "Mật khẩu tối thiểu 6 ký tự").optional(),
+  email: z.string().optional(),
+  password: z
+    .union([z.string().min(6, "Mật khẩu tối thiểu 6 ký tự"), z.literal("")])
+    .transform((val) => (val === "" ? undefined : val))
+    .optional(),
   fullName: z.string().min(2, "Vui lòng nhập họ tên đầy đủ"),
   phone: z
     .string()
@@ -47,8 +47,22 @@ export default function ProfilePage() {
     },
   });
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    console.log("Submit:", values);
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    const dataSend = {
+      fullName: values.fullName,
+      phone: values.phone,
+      password: values.password,
+    };
+    try {
+      const res = await axiosInstance({
+        method: "PATCH",
+        url: `${URL_PATHS.USERS}/${user?._id}`,
+        data: values,
+      });
+      toastifyUtils("success", "Cập nhật thông tin cá nhân thành công!");
+    } catch (error) {
+      console.error("Error update profile: ", error);
+    }
     setIsEditing(false);
   };
 
@@ -69,25 +83,6 @@ export default function ProfilePage() {
           onSubmit={form.handleSubmit(onSubmit)}
           className="space-y-5 mt-2"
         >
-          {/* Full name */}
-          <FormField
-            control={form.control}
-            name="fullName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Họ và tên</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="Nhập họ và tên"
-                    disabled={!isEditing}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
           {/* Email */}
           <FormField
             control={form.control}
@@ -99,6 +94,25 @@ export default function ProfilePage() {
                   <Input
                     type="email"
                     placeholder="example@email.com"
+                    disabled={true}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Full name */}
+          <FormField
+            control={form.control}
+            name="fullName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Họ và tên</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Nhập họ và tên"
                     disabled={!isEditing}
                     {...field}
                   />

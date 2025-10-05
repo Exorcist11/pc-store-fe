@@ -175,7 +175,9 @@ export default function Cart() {
                 <div className="flex items-center justify-center flex-col gap-3 h-full">
                   <Inbox size={120} />
                   <h3 className="font-semibold text-xl">Giỏ hàng trống!</h3>
-                  <Button>Tiếp tục mua sắm</Button>
+                  <Button type="button" onClick={() => router.push("/")}>
+                    Tiếp tục mua sắm
+                  </Button>
                 </div>
               )}
             </div>

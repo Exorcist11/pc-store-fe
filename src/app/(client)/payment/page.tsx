@@ -17,7 +17,7 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 export default function Payment() {
-  const router = useRouter()
+  const router = useRouter();
   const form = useForm<PaymentFormData>({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
@@ -48,7 +48,7 @@ export default function Payment() {
   const onSubmit = async (data: PaymentFormData) => {
     const payload = {
       userId: user?._id || "",
-      isGuest: data.isGuest,
+      isGuest: !user,
       guestInfo: {
         email: data.guestInfo.email,
         firstName: data.guestInfo.firstName,
@@ -81,7 +81,7 @@ export default function Payment() {
       });
       toastifyUtils("success", "Tạo mới đơn hàng thành công!");
       form.reset();
-      router.push("/")
+      router.push("/");
     } catch (error) {
       console.error("Error create order");
       toastifyUtils("error", "Tạo mới đơn hàng thất bại!");
