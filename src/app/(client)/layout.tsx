@@ -31,7 +31,7 @@ export default function ClientLayout({
   };
 
   return (
-    <div>
+    <div className="hide-scrollbar">
       <NavbarCustom />
       {children}
       <Footer03Page />

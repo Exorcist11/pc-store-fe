@@ -4,20 +4,35 @@ import { Logo } from "./logo";
 import { NavigationSheet } from "./navigation-sheet";
 import Link from "next/link";
 import { Input } from "../ui/input";
-import { Search, ShoppingCart, UserRound } from "lucide-react";
+import {
+  CircleUserRound,
+  Heart,
+  History,
+  LogOut,
+  Search,
+  Settings,
+  ShoppingBag,
+  ShoppingCart,
+  User,
+  UserRound,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { useEffect, useState } from "react";
 import { IProduct } from "@/interface/product.interface";
 import { debounce } from "lodash";
 import { getFeatureProduct } from "@/services/products";
+import { Avatar, AvatarImage } from "../ui/avatar";
+import { AvatarFallback } from "@radix-ui/react-avatar";
 
 const NavbarCustom = () => {
   const router = useRouter();
@@ -47,6 +62,11 @@ const NavbarCustom = () => {
     const value = e.target.value;
     setQuery(value);
     fetchSearchResult(value);
+  };
+
+  const handleLogout = () => {
+    signOut();
+    router.push("/login");
   };
 
   useEffect(() => {
@@ -109,13 +129,69 @@ const NavbarCustom = () => {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline">{user?.fullName}</Button>
+                <Button
+                  variant="ghost"
+                  className="flex items-center gap-2 px-2 hover:bg-accent/60 rounded-full"
+                >
+                  <CircleUserRound size={28} />
+                  <span className="hidden md:inline font-medium text-sm">
+                    {user?.fullName || "Tài khoản"}
+                  </span>
+                </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
 
-                <DropdownMenuItem onClick={() => signOut()}>
-                  Log out
+              <DropdownMenuContent className="w-60" align="end" forceMount>
+                <DropdownMenuLabel className="text-sm font-semibold">
+                  Xin chào, {user?.fullName?.split(" ")[0] || "bạn"}
+                </DropdownMenuLabel>
+
+                <DropdownMenuSeparator />
+
+                <DropdownMenuGroup>
+                  <DropdownMenuItem
+                    onClick={() => router.push("/user/profile")}
+                  >
+                    <User className="mr-2 h-4 w-4 text-primary" />
+                    <span>Thông tin cá nhân</span>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    onClick={() => router.push("/user/orders")}
+                  >
+                    <ShoppingBag className="mr-2 h-4 w-4 text-primary" />
+                    <span>Đơn hàng của tôi</span>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    onClick={() => router.push("/user/wishlist")}
+                  >
+                    <Heart className="mr-2 h-4 w-4 text-primary" />
+                    <span>Sản phẩm yêu thích</span>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    onClick={() => router.push("/user/history")}
+                  >
+                    <History className="mr-2 h-4 w-4 text-primary" />
+                    <span>Lịch sử xem</span>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    onClick={() => router.push("/user/settings")}
+                  >
+                    <Settings className="mr-2 h-4 w-4 text-primary" />
+                    <span>Cài đặt tài khoản</span>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+
+                <DropdownMenuSeparator />
+
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="text-red-600 focus:text-red-600"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Đăng xuất</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
