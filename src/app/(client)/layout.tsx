@@ -5,6 +5,7 @@ import Footer03Page from "@/components/Footer";
 import NavbarCustom from "@/components/Navbar/navbar";
 
 import { ArrowUpFromLine } from "lucide-react";
+import ProductChatbot from "@/components/Chatbot/productChatbot";
 
 export default function ClientLayout({
   children,
@@ -35,6 +36,7 @@ export default function ClientLayout({
       <NavbarCustom />
       {children}
       <Footer03Page />
+      <ProductChatbot />
 
       {isVisible && (
         <button
