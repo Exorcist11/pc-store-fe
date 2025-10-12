@@ -1,9 +1,21 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MessageCircle, X, Send, Bot, User, Loader2 } from "lucide-react";
+import {
+  MessageCircle,
+  X,
+  Send,
+  Bot,
+  User,
+  Loader2,
+  Search,
+  TrendingUp,
+  Tag,
+  ShoppingBag,
+  ExternalLink,
+} from "lucide-react";
 import { getGeminiRecommend } from "@/services/gemini";
-import { useRouter } from 'next/navigation'
+import { useRouter } from "next/navigation";
 
 interface ProductRecommendation {
   productName: string;
@@ -19,15 +31,46 @@ interface ProductRecommendation {
   valueScore: number;
 }
 
+interface MarketSuggestion {
+  productName: string;
+  brand: string;
+  model: string;
+  estimatedPrice: {
+    min: number;
+    max: number;
+    currency: string;
+  };
+  specifications: Record<string, string>;
+  reason: string;
+  pros: string[];
+  cons: string[];
+  bestFor: string;
+  availableAt: string[];
+  valueScore: number;
+}
+
 interface BotResponseData {
   success: boolean;
   data: {
     userQuery: string;
+    analyzedFilter?: {
+      productTypes: string[];
+      categories: string[];
+      brands: string[];
+      keywords: string[];
+    };
     totalProductsFound: number;
+    source: string;
     recommendations: {
       summary: string;
       recommendations: ProductRecommendation[];
       advice: string;
+    };
+    marketSuggestions?: {
+      message: string;
+      marketSuggestions: MarketSuggestion[];
+      buyingGuide: string;
+      alternativeSearch: string;
     };
   };
 }
@@ -40,7 +83,7 @@ interface Message {
 
 export default function ProductChatbot() {
   const [isOpen, setIsOpen] = useState(false);
- const router = useRouter()
+  const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([
     {
       type: "bot",
@@ -57,6 +100,12 @@ export default function ProductChatbot() {
       style: "currency",
       currency: "VND",
     }).format(price);
+  };
+
+  const formatPriceRange = (min: number, max: number, currency: string) => {
+    const minFormatted = new Intl.NumberFormat("vi-VN").format(min);
+    const maxFormatted = new Intl.NumberFormat("vi-VN").format(max);
+    return `${minFormatted} - ${maxFormatted} ${currency}`;
   };
 
   const handleSendMessage = async () => {
@@ -84,20 +133,7 @@ export default function ProductChatbot() {
     setIsLoading(false);
   };
 
-  const renderBotResponse = (data: BotResponseData) => {
-    if (!data.success || data.data.totalProductsFound === 0) {
-      return (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-800 font-medium">
-            Không tìm thấy sản phẩm phù hợp trong hệ thống.
-          </p>
-          <p className="text-red-600 text-sm mt-2">
-            Vui lòng thử lại với từ khóa khác hoặc liên hệ nhân viên hỗ trợ.
-          </p>
-        </div>
-      );
-    }
-
+  const renderStoreProducts = (data: BotResponseData) => {
     const { recommendations } = data.data;
 
     return (
@@ -203,7 +239,10 @@ export default function ProductChatbot() {
                   </span>
                 </div>
               </div>
-              <button className="bg-blue-600 text-white text-xs px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium w-full" onClick={() => router.push(`/product/${product.productSlug}`)}>
+              <button
+                className="bg-blue-600 text-white text-xs px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium w-full"
+                onClick={() => router.push(`/product/${product.productSlug}`)}
+              >
                 Xem chi tiết
               </button>
             </div>
@@ -221,6 +260,234 @@ export default function ProductChatbot() {
         )}
       </div>
     );
+  };
+
+  const renderNoProductsFound = (data: BotResponseData) => {
+    const { marketSuggestions, analyzedFilter, recommendations } = data.data;
+
+    if (!marketSuggestions) {
+      return (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-800 font-medium">
+            Không tìm thấy sản phẩm phù hợp.
+          </p>
+          <p className="text-red-600 text-sm mt-2">
+            Vui lòng thử lại với từ khóa khác.
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-3">
+        {/* Thông báo chính */}
+        <div className="bg-gradient-to-br from-orange-50 to-yellow-50 border-2 border-orange-200 rounded-xl p-4">
+          <div className="flex items-start gap-3">
+            <div className="bg-orange-100 p-2 rounded-lg flex-shrink-0">
+              <Search className="text-orange-600" size={20} />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-gray-900 text-sm mb-2">
+                Không tìm thấy trong cửa hàng
+              </h3>
+              <p className="text-gray-700 text-xs leading-relaxed mb-2">
+                Hiện tại chúng tôi chưa có{" "}
+                <span className="font-semibold text-orange-700">
+                  "{data.data.userQuery}"
+                </span>{" "}
+                trong kho.
+              </p>
+              {analyzedFilter && analyzedFilter.keywords && (
+                <div className="bg-white rounded-lg p-2 border border-orange-100">
+                  <p className="text-xs text-gray-600 mb-1 font-medium">
+                    🔍 Từ khóa liên quan:
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {analyzedFilter.keywords.slice(0, 3).map((keyword, idx) => (
+                      <span
+                        key={idx}
+                        className="bg-orange-100 text-orange-700 text-xs px-2 py-0.5 rounded-full"
+                      >
+                        {keyword}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Lời khuyên */}
+        {recommendations.advice && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <div className="flex items-start gap-2">
+              <span className="text-base">💡</span>
+              <p className="text-blue-800 text-xs leading-relaxed">
+                {recommendations.advice}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Header sản phẩm thị trường */}
+        <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg p-3 text-white">
+          <div className="flex items-center gap-2 mb-1">
+            <TrendingUp size={16} />
+            <h3 className="font-bold text-sm">Gợi ý từ thị trường</h3>
+          </div>
+          <p className="text-purple-100 text-xs">{marketSuggestions.message}</p>
+        </div>
+
+        {/* Danh sách sản phẩm thị trường */}
+        {marketSuggestions.marketSuggestions
+          .slice(0, 3)
+          .map((product, index) => (
+            <div
+              key={index}
+              className="bg-white border border-gray-200 rounded-lg p-3 hover:border-blue-400 hover:shadow-md transition-all"
+            >
+              {/* Header */}
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex-1">
+                  <div className="flex items-center gap-1 mb-1">
+                    <ShoppingBag size={14} className="text-blue-600" />
+                    <h4 className="font-bold text-gray-900 text-xs">
+                      {product.productName}
+                    </h4>
+                  </div>
+                  <p className="text-xs text-gray-500">{product.brand}</p>
+                </div>
+                <div className="flex items-center gap-0.5 bg-yellow-100 px-2 py-1 rounded">
+                  {[...Array(10)].map((_, i) => (
+                    <div
+                      key={i}
+                      className={`w-1 h-1 rounded-full ${
+                        i < product.valueScore ? "bg-yellow-500" : "bg-gray-300"
+                      }`}
+                    />
+                  ))}
+                  <span className="text-xs font-bold text-gray-700 ml-1">
+                    {product.valueScore}/10
+                  </span>
+                </div>
+              </div>
+
+              {/* Giá */}
+              <div className="bg-gradient-to-r from-red-50 to-orange-50 rounded-lg p-2 mb-2 border border-red-200">
+                <p className="text-xs text-gray-600 mb-0.5">Giá tham khảo:</p>
+                <p className="text-red-600 font-bold text-sm">
+                  {formatPriceRange(
+                    product.estimatedPrice.min,
+                    product.estimatedPrice.max,
+                    product.estimatedPrice.currency
+                  )}
+                </p>
+              </div>
+
+              {/* Thông số (chỉ hiển thị 4 spec quan trọng nhất) */}
+              <div className="bg-gray-50 rounded-lg p-2 mb-2">
+                <p className="text-xs font-semibold text-gray-700 mb-1">
+                  ⚙️ Thông số:
+                </p>
+                <div className="grid grid-cols-2 gap-1">
+                  {Object.entries(product.specifications)
+                    .slice(0, 4)
+                    .map(([key, value]) => (
+                      <div key={key} className="text-xs">
+                        <span className="text-gray-500">{key}:</span>
+                        <span className="text-gray-900 ml-1 font-medium text-xs">
+                          {value}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+
+              {/* Ưu điểm (chỉ 2 điểm) */}
+              <div className="bg-green-50 rounded-lg p-2 mb-2 border border-green-200">
+                <p className="text-green-700 font-semibold text-xs mb-1">
+                  ✓ Ưu điểm:
+                </p>
+                <ul className="space-y-0.5">
+                  {product.pros.slice(0, 2).map((pro, i) => (
+                    <li key={i} className="text-gray-700 text-xs">
+                      • {pro}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Nơi mua */}
+              <div className="flex items-center justify-between pt-2 border-t">
+                <div className="flex flex-wrap gap-1">
+                  {product.availableAt.slice(0, 2).map((store, i) => (
+                    <span
+                      key={i}
+                      className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded"
+                    >
+                      {store}
+                    </span>
+                  ))}
+                </div>
+                {/* <button className="bg-blue-600 text-white text-xs px-3 py-1 rounded hover:bg-blue-700 transition flex items-center gap-1">
+                  Xem
+                  <ExternalLink size={10} />
+                </button> */}
+              </div>
+            </div>
+          ))}
+
+        {/* Hướng dẫn mua hàng */}
+        <div className="bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-200 rounded-lg p-3">
+          <div className="flex items-start gap-2">
+            <div className="bg-indigo-100 p-1.5 rounded">
+              <Tag className="text-indigo-600" size={16} />
+            </div>
+            <div className="flex-1">
+              <h4 className="font-bold text-indigo-900 text-xs mb-1">
+                📚 Hướng dẫn mua
+              </h4>
+              <p className="text-gray-700 text-xs leading-relaxed mb-2">
+                {marketSuggestions.buyingGuide}
+              </p>
+              <div className="bg-white rounded p-2 border border-indigo-100">
+                <p className="text-xs text-gray-600 mb-1">
+                  🔎 Từ khóa thay thế:
+                </p>
+                <p className="text-indigo-700 text-xs font-medium">
+                  {marketSuggestions.alternativeSearch}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderBotResponse = (data: BotResponseData) => {
+    if (!data.success) {
+      return (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-800 font-medium">
+            Đã xảy ra lỗi khi xử lý yêu cầu.
+          </p>
+          <p className="text-red-600 text-sm mt-2">Vui lòng thử lại sau.</p>
+        </div>
+      );
+    }
+
+    // Case 1: Có sản phẩm trong cửa hàng
+    if (
+      data.data.totalProductsFound > 0 &&
+      data.data.recommendations.recommendations.length > 0
+    ) {
+      return renderStoreProducts(data);
+    }
+
+    // Case 2: Không có sản phẩm trong cửa hàng, hiển thị gợi ý từ thị trường
+    return renderNoProductsFound(data);
   };
 
   return (
