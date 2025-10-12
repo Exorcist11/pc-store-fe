@@ -22,6 +22,9 @@ const URL_PATHS = {
 
   // users
   USERS: "/users",
+
+  // Gemini
+  GEMINI: "/gemini/recommend",
 };
 
 export default URL_PATHS;

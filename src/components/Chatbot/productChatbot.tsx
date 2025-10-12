@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { MessageCircle, X, Send, Bot, User, Loader2 } from "lucide-react";
+import { getGeminiRecommend } from "@/services/gemini";
+import { useRouter } from 'next/navigation'
 
 interface ProductRecommendation {
   productName: string;
@@ -38,6 +40,7 @@ interface Message {
 
 export default function ProductChatbot() {
   const [isOpen, setIsOpen] = useState(false);
+ const router = useRouter()
   const [messages, setMessages] = useState<Message[]>([
     {
       type: "bot",
@@ -69,60 +72,16 @@ export default function ProductChatbot() {
     setInputValue("");
     setIsLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      // Mock response - replace with actual API call to BotResponseData
-      const mockResponse = {
-        success: true,
-        data: {
-          userQuery: inputValue,
-          totalProductsFound: 1,
-          recommendations: {
-            summary:
-              "Khách hàng đang tìm kiếm RAM cho máy tính. Dựa trên thông tin hiện có, tôi đề xuất RAM PC Kingston Fury Beast Black 16GB 3200MHz DDR4 KF432C16BB1/16.",
-            recommendations: [
-              {
-                productName:
-                  "RAM PC Kingston Fury Beast Black 16GB 3200MHz DDR4 KF432C16BB1/16",
-                productSlug:
-                  "ram-pc-kingston-fury-beast-black-16gb-3200mhz-ddr4-kf432c16bb116",
-                variantSku: "KF432C16BB1",
-                price: 1290000,
-                discount: 0,
-                finalPrice: 1290000,
-                attributes: {
-                  "Kết nối": "DIMM (PC, Desktop)",
-                  "Bus RAM": "3200MHz",
-                  "Dung lượng": "16GB",
-                  "Loại RAM": "DDR4",
-                },
-                reason:
-                  "RAM Kingston Fury Beast Black 16GB là một lựa chọn tốt cho người dùng muốn nâng cấp bộ nhớ.",
-                pros: [
-                  "Dung lượng 16GB đủ cho nhiều tác vụ",
-                  "Tốc độ bus 3200MHz giúp tăng hiệu năng",
-                  "Giá cả phải chăng",
-                  "Thương hiệu uy tín",
-                ],
-                cons: [],
-                valueScore: 9,
-              },
-            ],
-            advice:
-              "Trước khi mua, hãy kiểm tra xem bo mạch chủ của bạn có hỗ trợ RAM DDR4 3200MHz không.",
-          },
-        },
-      };
+    const res = await getGeminiRecommend({ query: inputValue });
 
-      const botMessage: Message = {
-        type: "bot",
-        content: mockResponse,
-        timestamp: new Date(),
-      };
+    const botMessage: Message = {
+      type: "bot",
+      content: res,
+      timestamp: new Date(),
+    };
 
-      setMessages((prev) => [...prev, botMessage]);
-      setIsLoading(false);
-    }, 1500);
+    setMessages((prev) => [...prev, botMessage]);
+    setIsLoading(false);
   };
 
   const renderBotResponse = (data: BotResponseData) => {
@@ -227,8 +186,8 @@ export default function ProductChatbot() {
             )}
 
             {/* Value Score */}
-            <div className="flex items-center justify-between pt-3 border-t">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center flex-col justify-between gap-3 pt-3 border-t">
+              <div className="flex items-center gap-2 flex-col">
                 <span className="text-xs text-gray-500">Đánh giá:</span>
                 <div className="flex items-center">
                   {[...Array(10)].map((_, i: number) => (
@@ -244,7 +203,7 @@ export default function ProductChatbot() {
                   </span>
                 </div>
               </div>
-              <button className="bg-blue-600 text-white text-xs px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium">
+              <button className="bg-blue-600 text-white text-xs px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium w-full" onClick={() => router.push(`/product/${product.productSlug}`)}>
                 Xem chi tiết
               </button>
             </div>
@@ -278,7 +237,7 @@ export default function ProductChatbot() {
 
       {/* Chat Window */}
       <div
-        className={`fixed bottom-5 right-5 w-96 h-[600px] bg-white rounded-2xl shadow-2xl flex flex-col transition-all duration-300 z-50 ${
+        className={`fixed bottom-5 right-5 w-[500px] h-[600px] bg-white rounded-2xl shadow-2xl flex flex-col transition-all duration-300 z-50 ${
           isOpen ? "scale-100 opacity-100" : "scale-0 opacity-0"
         }`}
       >
