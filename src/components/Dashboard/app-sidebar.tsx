@@ -53,21 +53,17 @@ const data = {
   navMain: [
     {
       title: "Dashboard",
-      url: "/dashboard",
+      url: "",
       icon: LayoutDashboard,
       isActive: true,
       items: [
         {
-          title: "History",
-          url: "#",
+          title: "Thống kê",
+          url: "/admin/dashboard",
         },
         {
-          title: "Starred",
-          url: "#",
-        },
-        {
-          title: "Settings",
-          url: "#",
+          title: "Thống kê chi tiết",
+          url: "/admin/report-period",
         },
       ],
     },
@@ -99,10 +95,10 @@ const data = {
           title: "Đơn hàng gần đây",
           url: "/admin/orders",
         },
-        {
-          title: "Đơn hàng ",
-          url: "/trips/schedule",
-        },
+        // {
+        //   title: "Đơn hàng ",
+        //   url: "/trips/schedule",
+        // },
       ],
     },
     {
@@ -114,30 +110,30 @@ const data = {
           title: "Danh sách người dùng",
           url: "/admin/users",
         },
-        {
-          title: "Team",
-          url: "#",
-        },
+        // {
+        //   title: "Team",
+        //   url: "#",
+        // },
       ],
     },
   ],
-  projects: [
-    {
-      name: "Đặt vé",
-      url: "/ticket",
-      icon: Ticket,
-    },
-    {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: PieChart,
-    },
-    {
-      name: "Travel",
-      url: "#",
-      icon: Map,
-    },
-  ],
+  // projects: [
+  //   {
+  //     name: "Đặt vé",
+  //     url: "/ticket",
+  //     icon: Ticket,
+  //   },
+  //   {
+  //     name: "Sales & Marketing",
+  //     url: "#",
+  //     icon: PieChart,
+  //   },
+  //   {
+  //     name: "Travel",
+  //     url: "#",
+  //     icon: Map,
+  //   },
+  // ],
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -148,7 +144,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        {/* <NavProjects projects={data.projects} /> */}
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />

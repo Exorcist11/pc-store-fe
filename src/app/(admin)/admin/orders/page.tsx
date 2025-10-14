@@ -51,9 +51,15 @@ export default function page() {
         cell: ({ row }: any) => {
           const original = row?.original;
           if (original.isGuest) {
-            return `${original.guestInfo?.firstName} ${original.guestInfo?.lastName}`;
+            return `${original.guestInfo?.firstName || ""} ${
+              original.guestInfo?.lastName || ""
+            }`;
           }
-          return original.user || "Unknown";
+
+          // ✅ Chỉ render thuộc tính cần thiết, không render cả object
+          return (
+            original.user?.fullName || original.user?.username || "Unknown"
+          );
         },
         meta: {
           cellClassName: "py-5 w-[15%]",
@@ -233,9 +239,9 @@ export default function page() {
               setSearch(e.target.value);
             }, 1000)}
           />
-          <Button onClick={() => {}}>
+          {/* <Button onClick={() => {}}>
             <Plus color="#fff" /> Thêm mới
-          </Button>
+          </Button> */}
         </div>
       </div>
 

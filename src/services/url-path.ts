@@ -25,6 +25,10 @@ const URL_PATHS = {
 
   // Gemini
   GEMINI: "/gemini/recommend",
+
+  // report
+  DASHBOARD: "/report/dashboard",
+  REVENUE_BY_PERIOD: "/report/revenue-by-period",
 };
 
 export default URL_PATHS;
