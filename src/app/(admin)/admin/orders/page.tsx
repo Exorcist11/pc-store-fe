@@ -207,8 +207,8 @@ export default function page() {
     const params: IApiParams = {
       limit: pageSize,
       index: pageIndex,
-      order: "createdDate",
-      sort: "asc",
+      order: "desc",
+      sort: "createdAt",
       keyword: search,
     };
     try {

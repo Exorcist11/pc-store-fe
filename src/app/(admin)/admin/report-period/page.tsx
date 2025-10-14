@@ -79,7 +79,7 @@ export default function ReportPeriod() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <h1 className="text-3xl font-bold">📊 Báo cáo doanh thu</h1>
 
       {/* Filter */}

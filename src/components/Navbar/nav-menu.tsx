@@ -15,10 +15,10 @@ export const NavMenu = (props: NavigationMenuProps) => {
   const menus = [
     { path: "/", label: "Trang chủ" },
     { path: "/may-tinh-xach-tay", label: "Laptop" },
-    { path: "/pc", label: "PC - Máy tính để bàn" },
-    { path: "/linh-kien", label: "Linh kiện" },
+    { path: "/may-tinh-de-ban", label: "PC - Máy tính để bàn" },
+    { path: "/linh-kien-may-tinh", label: "Linh kiện" },
     { path: "/man-hinh", label: "Màn hình" },
-    { path: "/phu-kien", label: "Phụ kiện" },
+    // { path: "/phu-kien", label: "Phụ kiện" },
     { path: "/khuyen-mai", label: "Khuyến mãi" },
     { path: "/lien-he", label: "Liên hệ" },
   ];

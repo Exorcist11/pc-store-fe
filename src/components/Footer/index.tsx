@@ -44,7 +44,7 @@ const footerSections = [
     title: "Hỗ trợ",
     links: [
       {
-        title: "Hướng dẫn đặt vé",
+        title: "Hướng dẫn đặt hàng",
         href: "#",
       },
       {
@@ -52,7 +52,7 @@ const footerSections = [
         href: "#",
       },
       {
-        title: "Chính sách đổi trả, hủy vé",
+        title: "Chính sách đổi trả",
         href: "#",
       },
       {

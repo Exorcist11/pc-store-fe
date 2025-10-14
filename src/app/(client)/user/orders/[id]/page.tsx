@@ -71,6 +71,8 @@ const OrderDetailPage = () => {
   const [orderData, setOrderData] = useState<OrderData | null>(null);
   const [loading, setLoading] = useState(true);
   const params = useParams();
+  const [city, setCity] = useState<any>();
+  const [state, setState] = useState<any>();
 
   const getOrder = async () => {
     if (!params?.id) return;
@@ -109,6 +111,23 @@ const OrderDetailPage = () => {
       : "bg-orange-100 text-orange-800 border-orange-300";
   };
 
+  const getLocationInfo = async (cityId: string, stateId: string) => {
+    try {
+      const [cityResponse, stateResponse] = await Promise.all([
+        fetch(`https://provinces.open-api.vn/api/v2/p/${cityId}`),
+        fetch(`https://provinces.open-api.vn/api/v2/w/${stateId}`),
+      ]);
+
+      const cityData = await cityResponse.json();
+      const stateData = await stateResponse.json();
+
+      setCity(cityData);
+      setState(stateData);
+    } catch (error) {
+      console.error("Error fetching location info:", error);
+    }
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",
@@ -136,6 +155,15 @@ const OrderDetailPage = () => {
     };
     return icons[status];
   };
+
+  useEffect(() => {
+    if (orderData?.shippingAddress) {
+      const { city: cityId, state: stateId } = orderData.shippingAddress;
+      if (cityId && stateId) {
+        getLocationInfo(cityId, stateId);
+      }
+    }
+  }, [orderData?.shippingAddress]);
 
   if (loading) {
     return (
@@ -273,8 +301,8 @@ const OrderDetailPage = () => {
                       {orderData.shippingAddress.street}
                     </p>
                     <p className="text-slate-600 text-sm mt-1">
-                      {orderData.shippingAddress.state},{" "}
-                      {orderData.shippingAddress.city}
+                      {city?.name ?? orderData.shippingAddress?.city},{" "}
+                      {state?.name ?? orderData.shippingAddress?.state}
                     </p>
                     <p className="text-slate-600 text-sm">
                       {orderData.shippingAddress.country}
