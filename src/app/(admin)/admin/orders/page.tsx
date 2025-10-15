@@ -101,10 +101,10 @@ export default function page() {
               color: "bg-yellow-100 text-yellow-800",
               icon: <Clock size={14} className="mr-1" />,
             },
-            confirmed: {
-              label: "Đã xác nhận",
-              color: "bg-blue-100 text-blue-800",
-              icon: <CheckCircle2 size={14} className="mr-1" />,
+            processing: {
+              label: "Đang xử lý",
+              color: "bg-indigo-100 text-indigo-800",
+              icon: <Clock size={14} className="mr-1" />,
             },
             shipped: {
               label: "Đang giao",
