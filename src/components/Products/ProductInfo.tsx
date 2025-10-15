@@ -8,6 +8,7 @@ import { IAddToCart } from "@/interface/cart.interface";
 import { calculateDiscountedPrice } from "@/utils/formatPrice";
 import { addToCart } from "@/services/cart";
 import { useAuthStore } from "@/store/authStore";
+import { useRouter } from "next/navigation";
 
 interface ProductInfoProps {
   product: IProductPublic;
@@ -24,6 +25,7 @@ export default function ProductInfo({
   const reviews = 28;
   // Tìm variant đầu tiên còn hàng
   const { user } = useAuthStore();
+  const router = useRouter();
 
   const [quantity, setQuantity] = useState(1);
   const [wishlist, setWishlist] = useState(false);
@@ -49,7 +51,7 @@ export default function ProductInfo({
 
   const handleAddToCart = async () => {
     try {
-      if (product && selectedVariant) {
+      if (product && selectedVariant && user) {
         const dataSend: IAddToCart = {
           user: user?._id ?? "",
           product: product._id,
@@ -58,6 +60,8 @@ export default function ProductInfo({
         };
         await addToCart(dataSend);
         toastifyUtils("success", "Thêm sản phẩm vào giỏ hàng thành công!");
+      } else {
+        router.push('/login')
       }
     } catch (error) {
       toastifyUtils("error", "Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng!");
