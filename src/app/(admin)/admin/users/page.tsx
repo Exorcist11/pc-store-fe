@@ -2,11 +2,13 @@
 
 import InputWithIcon from "@/components/CustomInput/InputWithIcon";
 import CustomTable from "@/components/CustomTable";
+import EditUserModal from "@/components/Dialog/EditUserModal";
 import { Button } from "@/components/ui/button";
 import useLoadingStore from "@/hooks/useLoading";
 import { IApiParams } from "@/interface/shared/api";
 import { IUserResponse } from "@/interface/user.interface";
-import { getAllUsers } from "@/services/users";
+import { createUser, getAllUsers, updateUser } from "@/services/users";
+import toastifyUtils from "@/utils/toastify";
 import { debounce } from "lodash";
 import { Plus, Search } from "lucide-react";
 import React from "react";
@@ -16,6 +18,9 @@ export default function page() {
   const { stopLoading, loading, startLoading } = useLoadingStore();
   const [users, setUsers] = React.useState<IUserResponse>();
   const [pageSize, setPageSize] = React.useState<number>(10);
+  const [selectedUser, setSelectedUser] = React.useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = React.useState<boolean>(false);
+  const [mode, setMode] = React.useState<"create" | "edit">("create");
 
   const columns: any[] = React.useMemo(
     () => [
@@ -91,19 +96,6 @@ export default function page() {
           cellClassName: "py-5 w-[15%] text-center",
         },
       },
-
-      // {
-      //   header: "",
-      //   id: "_action",
-      //   accessorKey: "_action",
-      //   cell: ({ row }: any) => {
-      //     return <Trash2 size={18} color="red" />;
-      //   },
-      //   meta: {
-      //     cellClassName: "py-5 w-[15%] text-center",
-      //     disableRowClick: true,
-      //   },
-      // },
     ],
     [JSON.stringify(users)]
   );
@@ -119,10 +111,38 @@ export default function page() {
     };
     try {
       const response = await getAllUsers(params);
-
       setUsers(response?.data);
     } catch (error) {
       console.error("Error fetching users: ", error);
+    } finally {
+      stopLoading();
+    }
+  };
+
+  const handleRowClick = (row: any) => {
+    setSelectedUser(row);
+    setIsModalOpen(true);
+    setMode("edit");
+  };
+
+  const handleUpdateUser = async (data: any) => {
+    try {
+      startLoading();
+
+      if (mode === "create") {
+        await createUser(data);
+
+        toastifyUtils("success", "Tạo mới user thành công!");
+      } else {
+        await updateUser(selectedUser?._id, data);
+
+        toastifyUtils("success", "Cập nhật thông tin thành công!");
+      }
+
+      await getUsers(users?.index || 1);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      toastifyUtils("error", "Cập nhật thất bại!");
     } finally {
       stopLoading();
     }
@@ -146,7 +166,12 @@ export default function page() {
               setSearch(e.target.value);
             }, 1000)}
           />
-          <Button onClick={() => {}}>
+          <Button
+            onClick={() => {
+              setIsModalOpen(true);
+              setMode("create");
+            }}
+          >
             <Plus color="#fff" /> Thêm mới
           </Button>
         </div>
@@ -163,9 +188,17 @@ export default function page() {
           totalCount={users?.total || 0}
           onChangePage={(pageIndex) => getUsers(pageIndex)}
           onChangePageSize={(pageSize) => setPageSize(pageSize)}
-          //   onRowClick={(row) => handleRowClick(row)}
+          onRowClick={handleRowClick}
         />
       </div>
+
+      <EditUserModal
+        mode={mode}
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        user={selectedUser}
+        onSubmit={handleUpdateUser}
+      />
     </div>
   );
 }
