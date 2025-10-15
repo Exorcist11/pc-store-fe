@@ -13,21 +13,41 @@ import {
 import { IProduct } from "@/interface/product.interface";
 import { getPublicProductByCategorySlug } from "@/services/categories";
 import toastifyUtils from "@/utils/toastify";
-import { Grid, List, Package2 } from "lucide-react";
+import { Grid, List, Package2, RefreshCw } from "lucide-react";
 import { useParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 
 export default function ProductByCategory() {
   const [view, setView] = useState<"grid" | "list">("grid");
   const [products, setProducts] = useState<IProduct[]>([]);
+  const [sort, setSort] = useState({
+    sort: "createdAt",
+    order: "desc",
+  });
   const params = useParams();
   const [loading, setLoading] = useState<boolean>(false);
 
-  const getProducts = async () => {
+  const handleSortChange = (value: string) => {
+    switch (value) {
+      case "price-asc":
+        setSort({ sort: "price", order: "asc" });
+        break;
+      case "price-desc":
+        setSort({ sort: "price", order: "desc" });
+        break;
+      case "createdAt":
+      default:
+        setSort({ sort: "createdAt", order: "desc" });
+        break;
+    }
+  };
+
+  const getProducts = async (sortOptions = sort) => {
     setLoading(true);
     try {
       const response = await getPublicProductByCategorySlug(
-        String(params?.category)
+        String(params?.category),
+        sortOptions
       );
 
       if (!response?.items) {
@@ -49,8 +69,14 @@ export default function ProductByCategory() {
   };
 
   useEffect(() => {
-    getProducts();
-  }, [params]);
+    if (params?.category) {
+      getProducts({ sort: "createdAt", order: "desc" });
+    }
+  }, [params?.category]);
+
+  useEffect(() => {
+    if (params?.category) getProducts();
+  }, [sort]);
   return (
     <div className="container flex gap-6 mx-auto mt-[160px]">
       <SidebarFilters />
@@ -68,13 +94,13 @@ export default function ProductByCategory() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <span>Sắp xếp theo:</span>
-              <Select defaultValue="popular">
+              <Select defaultValue="createdAt" onValueChange={handleSortChange}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Chọn" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="popular">Phổ biến nhất</SelectItem>
-                  <SelectItem value="newest">Mới nhất</SelectItem>
+                  <SelectItem value="createdAt">Mới nhất</SelectItem>
                   <SelectItem value="price-asc">Giá: Thấp đến Cao</SelectItem>
                   <SelectItem value="price-desc">Giá: Cao đến Thấp</SelectItem>
                 </SelectContent>
@@ -126,11 +152,11 @@ export default function ProductByCategory() {
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button
                   onClick={() => {
-                    // Logic để xóa bộ lọc
+                    getProducts({ sort: "createdAt", order: "desc" });
                   }}
                   variant="outline"
                 >
-                  <svg
+                  <RefreshCw
                     className="w-5 h-5 mr-2"
                     fill="none"
                     stroke="currentColor"
@@ -142,7 +168,7 @@ export default function ProductByCategory() {
                       strokeWidth="2"
                       d="M19 9l-7 7-7-7"
                     />
-                  </svg>
+                  </RefreshCw>
                   Xóa bộ lọc
                 </Button>
                 <Button
