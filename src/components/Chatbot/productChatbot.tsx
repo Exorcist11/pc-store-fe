@@ -250,11 +250,11 @@ export default function ProductChatbot() {
         ))}
 
         {/* Advice */}
-        {recommendations.advice && (
+        {recommendations?.advice && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
             <p className="text-yellow-800 text-xs">
               💡 <span className="font-medium">Lời khuyên:</span>{" "}
-              {recommendations.advice}
+              {recommendations?.advice}
             </p>
           </div>
         )}
@@ -319,12 +319,12 @@ export default function ProductChatbot() {
         </div>
 
         {/* Lời khuyên */}
-        {recommendations.advice && (
+        {recommendations?.advice && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
             <div className="flex items-start gap-2">
               <span className="text-base">💡</span>
               <p className="text-blue-800 text-xs leading-relaxed">
-                {recommendations.advice}
+                {recommendations?.advice}
               </p>
             </div>
           </div>
