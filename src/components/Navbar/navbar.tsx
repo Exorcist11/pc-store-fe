@@ -9,8 +9,10 @@ import {
   Heart,
   History,
   LogOut,
+  LucideIcon,
   Search,
   Settings,
+  Shield,
   ShoppingBag,
   ShoppingCart,
   User,
@@ -31,8 +33,12 @@ import { useEffect, useState } from "react";
 import { IProduct } from "@/interface/product.interface";
 import { debounce } from "lodash";
 import { getFeatureProduct } from "@/services/products";
-import { Avatar, AvatarImage } from "../ui/avatar";
-import { AvatarFallback } from "@radix-ui/react-avatar";
+
+interface IMenuItem {
+  icon: LucideIcon;
+  label: string;
+  path: string;
+}
 
 const NavbarCustom = () => {
   const router = useRouter();
@@ -40,6 +46,22 @@ const NavbarCustom = () => {
   const [results, setResults] = useState<IProduct[]>([]);
   const [query, setQuery] = useState<string>("");
   const [showResults, setShowResults] = useState<boolean>(false);
+
+  const menuItems: IMenuItem[] = [
+    { icon: User, label: "Thông tin cá nhân", path: "/user/profile" },
+    { icon: ShoppingBag, label: "Đơn hàng của tôi", path: "/user/orders" },
+    { icon: Heart, label: "Sản phẩm yêu thích", path: "/user/wishlist" },
+    { icon: History, label: "Lịch sử xem", path: "/user/history" },
+    { icon: Settings, label: "Cài đặt tài khoản", path: "/user/settings" },
+  ];
+
+  if (user?.role === "admin") {
+    menuItems.push({
+      icon: Shield,
+      label: "Trang quản trị",
+      path: "/admin/dashboard",
+    });
+  }
 
   const fetchSearchResult = debounce(async (search: string) => {
     if (!search.trim()) {
@@ -147,42 +169,15 @@ const NavbarCustom = () => {
 
                 <DropdownMenuSeparator />
 
-                <DropdownMenuGroup>
+                {menuItems.map(({ icon: Icon, label, path }) => (
                   <DropdownMenuItem
-                    onClick={() => router.push("/user/profile")}
+                    key={path}
+                    onClick={() => router.push(path)}
                   >
-                    <User className="mr-2 h-4 w-4 text-primary" />
-                    <span>Thông tin cá nhân</span>
+                    <Icon className="mr-2 h-4 w-4 text-primary" />
+                    <span>{label}</span>
                   </DropdownMenuItem>
-
-                  <DropdownMenuItem
-                    onClick={() => router.push("/user/orders")}
-                  >
-                    <ShoppingBag className="mr-2 h-4 w-4 text-primary" />
-                    <span>Đơn hàng của tôi</span>
-                  </DropdownMenuItem>
-
-                  <DropdownMenuItem
-                    onClick={() => router.push("/user/wishlist")}
-                  >
-                    <Heart className="mr-2 h-4 w-4 text-primary" />
-                    <span>Sản phẩm yêu thích</span>
-                  </DropdownMenuItem>
-
-                  <DropdownMenuItem
-                    onClick={() => router.push("/user/history")}
-                  >
-                    <History className="mr-2 h-4 w-4 text-primary" />
-                    <span>Lịch sử xem</span>
-                  </DropdownMenuItem>
-
-                  <DropdownMenuItem
-                    onClick={() => router.push("/user/settings")}
-                  >
-                    <Settings className="mr-2 h-4 w-4 text-primary" />
-                    <span>Cài đặt tài khoản</span>
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
+                ))}
 
                 <DropdownMenuSeparator />
 
