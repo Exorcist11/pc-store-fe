@@ -15,6 +15,7 @@ import Link from "next/link";
 // Schema validation cho đăng ký
 const registerFormSchema = z
   .object({
+    username: z.string().min(2, "Tên đăng nhập phải có ít nhất 2 ký tự"),
     fullName: z.string().min(2, "Họ tên phải có ít nhất 2 ký tự"),
     email: z.string().email("Email không hợp lệ"),
     password: z
@@ -41,6 +42,7 @@ export default function Register() {
   const form = useForm<z.infer<typeof registerFormSchema>>({
     resolver: zodResolver(registerFormSchema),
     defaultValues: {
+      username: "",
       fullName: "",
       email: "",
       password: "",
@@ -57,7 +59,8 @@ export default function Register() {
         method: "POST",
         url: `${URL_PATHS.REGISTER}`,
         data: {
-          name: data.fullName,
+          username: data.username,
+          fullName: data.fullName,
           email: data.email,
           password: data.password,
           phone: data.phone,
@@ -186,6 +189,30 @@ export default function Register() {
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <InputWithLabel
+                        title="Tên đăng nhập"
+                        type="text"
+                        isRequired
+                        className="p-3 h-12 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                        id="username"
+                        placeholder="Nhập tên đăng nhập"
+                        {...field}
+                      />
+                    </FormControl>
+                    {form.formState.errors.username && (
+                      <span className="text-red-500 text-sm">
+                        {form.formState.errors.username.message}
+                      </span>
+                    )}
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="fullName"
